@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Frontend Puro TypeScript</title>
+</head>
+<body>
+  <h1>Olá Mundo do TypeScript!</h1>
+  <div id="app"></div>
+
+  <!-- Injetar variáveis globais -->
+  <script>
+    window._env_ = {
+      API_URL: "http://localhost:8000/api"
+    };
+  </script>
+
+  <!-- Importar o JS compilado do TypeScript -->
+  <script src="./dist/index.js" type="module"></script>
+</body>
+</html>

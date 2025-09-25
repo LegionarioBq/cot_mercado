@@ -31,3 +31,20 @@ Dockerfile.frontend → Container do frontend.
 README.md → Documentação inicial.
 
 .gitignore → Para ignorar vendor/, node_modules/, arquivos temporários etc.
+
+
+
+```
+frontend/
+ ├── src/
+ │    ├── index.ts
+ │    └── utils.ts
+ ├── dist/              # (será gerado pelo tsc)
+ ├── index.html         # página principal
+ ├── tsconfig.json
+ ├── package.json
+ └── package-lock.json
+
+
+```
+

@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // Entrada e saída
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Ambiente do navegador
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+
+    // Tipos e bibliotecas
+    "types": ["node"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+
+    // Configurações de saída
+    "sourceMap": true,
+    "declaration": false,
+    "declarationMap": false,
+
+    // Regras estritas
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // JSX (caso use React no futuro, já está preparado)
+    "jsx": "react-jsx",
+
+    // Compatibilidade
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
