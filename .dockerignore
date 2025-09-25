@@ -1,0 +1,17 @@
+# Git
+.git
+.github
+.gitignore
+
+# Docker Compose local
+docker-compose.override.yml
+
+# Logs e temporários
+*.log
+*.pid
+*.tar
+*.out
+
+# Documentação e arquivos locais
+README.md
+*.md

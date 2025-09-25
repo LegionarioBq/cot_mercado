@@ -1,0 +1,18 @@
+# Composer
+/vendor
+composer.lock
+
+# Cache Laravel
+/storage/*.key
+/storage/framework/*
+/storage/logs/*
+/bootstrap/cache/*
+
+# Configuração do sistema/IDE
+.DS_Store
+.vscode
+.idea
+
+# Git
+.git
+.gitignore

@@ -1,0 +1,25 @@
+# Etapa 1 - Build do frontend (TypeScript → JavaScript)
+FROM node:20 AS build
+
+WORKDIR /app
+
+COPY frontend/package*.json ./
+RUN npm install --silent
+
+COPY frontend/ ./
+RUN npm run build
+
+# Etapa 2 - Servidor estático
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar apenas os arquivos necessários do build
+COPY --from=build /app/dist ./dist
+COPY frontend/index.html ./
+
+# Instalar servidor estático
+RUN npm install -g serve
+
+EXPOSE 3000
+CMD ["serve", ".", "-l", "3000"]

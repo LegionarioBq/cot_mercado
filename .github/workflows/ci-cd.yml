@@ -1,0 +1,57 @@
+name: CI/CD Pipeline Cot Mercado
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to GitHub Container Registry
+        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: Set lowercase repository owner
+        id: repo_owner
+        run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build & Push Backend
+        run: |
+          docker build -f Dockerfile.backend -t ghcr.io/${{ env.REPO_OWNER }}/cot_backend:${{ github.sha }} .
+          docker tag ghcr.io/${{ env.REPO_OWNER }}/cot_backend:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/cot_backend:latest
+          docker push ghcr.io/${{ env.REPO_OWNER }}/cot_backend:${{ github.sha }}
+          docker push ghcr.io/${{ env.REPO_OWNER }}/cot_backend:latest
+
+      - name: Build & Push Frontend
+        run: |
+          docker build -f Dockerfile.frontend -t ghcr.io/${{ env.REPO_OWNER }}/cot_frontend:${{ github.sha }} .
+          docker tag ghcr.io/${{ env.REPO_OWNER }}/cot_frontend:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/cot_frontend:latest
+          docker push ghcr.io/${{ env.REPO_OWNER }}/cot_frontend:${{ github.sha }}
+          docker push ghcr.io/${{ env.REPO_OWNER }}/cot_frontend:latest
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd /var/www/cot_mercado
+            git pull origin main || true
+
+            # Exportar REPO_OWNER no servidor
+            export REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+
+            # Login GHCR no servidor
+            echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+            # Atualizar imagens e containers
+            docker compose pull
+            docker compose up -d
+          EOF

@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  backend:
+    image: ghcr.io/${REPO_OWNER}/cot_backend:latest
+    container_name: cot_backend
+    restart: always
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: laravel
+      DB_USERNAME: laravel
+      DB_PASSWORD: laravel
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    image: ghcr.io/${REPO_OWNER}/cot_frontend:latest
+    container_name: cot_frontend
+    restart: always
+    environment:
+      API_URL: http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  db:
+    image: mysql:8.0
+    container_name: cot_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: laravel
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
