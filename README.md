@@ -37,13 +37,14 @@ README.md → Documentação inicial.
 ```
 frontend/
  ├── src/
+ │    ├── index.html
  │    ├── index.ts
- │    └── utils.ts
- ├── dist/              # (será gerado pelo tsc)
- ├── index.html         # página principal
+ │    ├── api.ts
+ │    ├── style.css
  ├── tsconfig.json
+ ├── vite.config.js
  ├── package.json
- └── package-lock.json
+
 
 
 ```
