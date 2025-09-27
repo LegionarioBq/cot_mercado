@@ -49,3 +49,14 @@ frontend/
 
 ```
 
+
+
+📌 Benefícios dessa separação
+
+Controller → apenas orquestra requisições e respostas.
+
+Service → concentra toda a regra de negócio (CRUD).
+
+Requests → isolam a validação.
+
+Código fica mais limpo, reutilizável e testável.

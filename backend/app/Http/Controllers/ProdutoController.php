@@ -2,61 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Produto;
+use App\Http\Requests\ProdutoStoreRequest;
+use App\Http\Requests\ProdutoUpdateRequest;
+use App\Services\ProdutoService;
 use Illuminate\Http\Request;
 
 class ProdutoController extends Controller
 {
-    // Listar todos os produtos
-    public function index()
+    protected $produtoService;
+
+    public function __construct(ProdutoService $produtoService)
     {
-        return response()->json([
-            'data' => Produto::all()
-        ]);
+        $this->produtoService = $produtoService;
     }
 
-    // Mostrar um produto específico
+    public function index(Request $request)
+    {
+        return response()->json(
+            $this->produtoService->listar($request->get('per_page', 5))
+        );
+    }
+
     public function show($id)
     {
-        $produto = Produto::findOrFail($id);
-        return response()->json($produto);
+        return response()->json(
+            $this->produtoService->ver($id)
+        );
     }
 
-    // Criar novo produto
-    public function store(Request $request)
+    public function store(ProdutoStoreRequest $request)
     {
-        $validated = $request->validate([
-            'nome' => 'required|string|max:255',
-            'preco' => 'required|numeric',
-            'descricao' => 'nullable|string',
-        ]);
-
-        $produto = Produto::create($validated);
-
-        return response()->json($produto, 201);
+        return response()->json(
+            $this->produtoService->criar($request->validated()),
+            201
+        );
     }
 
-    // Atualizar produto
-    public function update(Request $request, $id)
+    public function update(ProdutoUpdateRequest $request, $id)
     {
-        $produto = Produto::findOrFail($id);
-
-        $validated = $request->validate([
-            'nome' => 'sometimes|string|max:255',
-            'preco' => 'sometimes|numeric',
-            'descricao' => 'nullable|string',
-        ]);
-
-        $produto->update($validated);
-
-        return response()->json($produto);
+        return response()->json(
+            $this->produtoService->atualizar($id, $request->validated())
+        );
     }
 
-    // Remover produto
     public function destroy($id)
     {
-        $produto = Produto::findOrFail($id);
-        $produto->delete();
+        $this->produtoService->deletar($id);
 
         return response()->json(['message' => 'Produto removido com sucesso']);
     }
