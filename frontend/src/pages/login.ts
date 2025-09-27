@@ -1,4 +1,5 @@
 import { carregarProdutos } from "./produtos";
+import Swal from "sweetalert2";
 
 export function carregarLogin() {
   const app = document.getElementById("app");
@@ -88,12 +89,30 @@ export function carregarLogin() {
 
     console.log("Tentando login:", usuario);
 
-    // 🚧 Aqui futuramente vai a validação real no backend
-    if (usuario && senha) {
-      alert("✅ Login realizado com sucesso!");
-      carregarProdutos(); // troca para tela de produtos
-    } else {
-      alert("❌ Usuário ou senha inválidos.");
+    try {
+      // 🚧 Aqui futuramente vai a validação real no backend
+      if (usuario && senha) {
+        await Swal.fire({
+          icon: "success",
+          title: "Login realizado com sucesso!",
+          text: `Bem-vindo, ${usuario}!`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        carregarProdutos(); // troca para tela de produtos
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Usuário ou senha inválidos",
+          text: "Por favor, tente novamente.",
+        });
+      }
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Erro no servidor",
+        text: error?.message || "Ocorreu um problema ao processar o login.",
+      });
     }
   };
 }

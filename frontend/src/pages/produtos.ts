@@ -1,4 +1,5 @@
 import api from "../api";
+import Swal from "sweetalert2";
 
 interface Produto {
   id: number;
@@ -172,8 +173,12 @@ export async function carregarProdutos(page: number = 1) {
     };
 
     paginaAtual = page;
-  } catch (error) {
-    console.error("❌ Erro ao carregar produtos:", error);
+  } catch (error: any) {
+    Swal.fire({
+      icon: "error",
+      title: "Erro ao carregar produtos",
+      text: error?.message || "Tente novamente mais tarde.",
+    });
   }
 }
 
@@ -202,13 +207,19 @@ async function salvarProduto() {
   try {
     if (id) {
       await api.put(`produtos/${id}`, { nome, preco, descricao });
+      Swal.fire("✅ Sucesso", "Produto atualizado com sucesso!", "success");
     } else {
       await api.post("produtos", { nome, preco, descricao });
+      Swal.fire("✅ Sucesso", "Produto criado com sucesso!", "success");
     }
     fecharModal();
     await carregarProdutos(paginaAtual);
-  } catch (error) {
-    console.error("❌ Erro ao salvar produto:", error);
+  } catch (error: any) {
+    Swal.fire({
+      icon: "error",
+      title: "Erro ao salvar produto",
+      text: error?.message || "Tente novamente.",
+    });
   }
 }
 
@@ -217,13 +228,27 @@ async function salvarProduto() {
 };
 
 ;(window as any).excluirProduto = async (id: number) => {
-  if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+  const confirmacao = await Swal.fire({
+    title: "Tem certeza?",
+    text: "Essa ação não poderá ser desfeita.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sim, excluir",
+    cancelButtonText: "Cancelar",
+  });
+
+  if (!confirmacao.isConfirmed) return;
 
   try {
     await api.delete(`produtos/${id}`);
+    Swal.fire("✅ Sucesso", "Produto excluído com sucesso!", "success");
     await carregarProdutos(paginaAtual);
-  } catch (error) {
-    console.error("❌ Erro ao excluir produto:", error);
+  } catch (error: any) {
+    Swal.fire({
+      icon: "error",
+      title: "Erro ao excluir produto",
+      text: error?.message || "Tente novamente.",
+    });
   }
 };
 
