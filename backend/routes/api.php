@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProdutoController;
 
-// Rota de teste (verificar se a API está funcionando)
+// Rota de teste
 Route::get('/', function () {
     return response()->json([
         'status' => 'ok',
@@ -12,5 +12,8 @@ Route::get('/', function () {
     ]);
 });
 
-// CRUD de produtos
+// 👉 Rota de busca precisa vir ANTES
+Route::get('/produtos/search', [ProdutoController::class, 'search']);
+
+// Rotas de produtos (CRUD)
 Route::apiResource('produtos', ProdutoController::class);

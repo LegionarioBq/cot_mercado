@@ -16,7 +16,7 @@ class ProdutoSeeder extends Seeder
             ['nome' => 'Notebook Dell Inspiron', 'preco' => 3500.00, 'descricao' => 'Notebook com processador i7 e 16GB RAM'],
             ['nome' => 'Teclado Mecânico', 'preco' => 250.00, 'descricao' => 'Teclado mecânico RGB para gamers'],
             ['nome' => 'Mouse Sem Fio Logitech', 'preco' => 120.00, 'descricao' => 'Mouse ergonômico sem fio'],
-            ['nome' => 'Monitor LG 24"', 'preco' => 800.00, 'descricao' => 'Monitor Full HD com 75Hz'],
+            ['nome' => 'Monitor LG 24\"', 'preco' => 800.00, 'descricao' => 'Monitor Full HD com 75Hz'],
             ['nome' => 'Headset HyperX', 'preco' => 400.00, 'descricao' => 'Headset com microfone removível'],
             ['nome' => 'Impressora HP Deskjet', 'preco' => 600.00, 'descricao' => 'Impressora multifuncional Wi-Fi'],
             ['nome' => 'Cadeira Gamer', 'preco' => 950.00, 'descricao' => 'Cadeira ergonômica ajustável'],
@@ -35,8 +35,7 @@ class ProdutoSeeder extends Seeder
             ['nome' => 'Câmera Logitech C920', 'preco' => 500.00, 'descricao' => 'Webcam Full HD para videoconferência'],
         ];
 
-        foreach ($produtos as $produto) {
-            Produto::create($produto);
-        }
+        // Insere todos os produtos de uma vez
+        Produto::insert($produtos);
     }
 }

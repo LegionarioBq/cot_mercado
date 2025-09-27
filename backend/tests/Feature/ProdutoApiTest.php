@@ -2,21 +2,27 @@
 
 namespace Tests\Feature;
 
-use App\Models\Produto;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
+use App\Models\Produto;
 
 class ProdutoApiTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Roda o seeder que popula os 20 produtos do SQL
+        $this->seed(\Database\Seeders\ProdutoSeeder::class);
+    }
+
     #[Test]
     public function consegue_listar_produtos_com_paginacao()
     {
-        Produto::factory()->count(10)->create();
-
-        $response = $this->getJson('/api/produtos');
+        $response = $this->getJson('/api/produtos?per_page=5&page=1');
 
         $response->assertStatus(200)
                  ->assertJsonStructure([
@@ -26,7 +32,8 @@ class ProdutoApiTest extends TestCase
                      ],
                      'per_page',
                      'total'
-                 ]);
+                 ])
+                 ->assertJsonFragment(['nome' => 'Notebook Dell Inspiron']); // garante que o seed foi carregado
     }
 
     #[Test]
@@ -47,18 +54,21 @@ class ProdutoApiTest extends TestCase
     #[Test]
     public function consegue_ver_um_produto_especifico()
     {
-        $produto = Produto::factory()->create();
+        $produto = Produto::first(); // busca o primeiro do banco seedado
 
         $response = $this->getJson("/api/produtos/{$produto->id}");
 
         $response->assertStatus(200)
-                 ->assertJsonFragment(['id' => $produto->id]);
+                 ->assertJsonFragment([
+                     'id' => $produto->id,
+                     'nome' => $produto->nome
+                 ]);
     }
 
     #[Test]
     public function consegue_atualizar_um_produto()
     {
-        $produto = Produto::factory()->create();
+        $produto = Produto::first(); // pega qualquer produto existente
 
         $response = $this->putJson("/api/produtos/{$produto->id}", [
             'nome' => 'Produto Atualizado',
@@ -72,7 +82,7 @@ class ProdutoApiTest extends TestCase
     #[Test]
     public function consegue_excluir_um_produto()
     {
-        $produto = Produto::factory()->create();
+        $produto = Produto::first(); // pega qualquer produto existente
 
         $response = $this->deleteJson("/api/produtos/{$produto->id}");
 

@@ -16,6 +16,9 @@ class ProdutoController extends Controller
         $this->produtoService = $produtoService;
     }
 
+    /**
+     * Listar produtos com paginação
+     */
     public function index(Request $request)
     {
         return response()->json(
@@ -23,6 +26,23 @@ class ProdutoController extends Controller
         );
     }
 
+    /**
+     * Buscar produtos com filtro (id, nome, preco, descricao)
+     */
+    public function search(Request $request)
+    {
+        $search  = $request->get('search');
+        $filter  = $request->get('filter', 'nome');
+        $perPage = $request->get('per_page', 5);
+
+        return response()->json(
+            $this->produtoService->buscar($filter, $search, $perPage)
+        );
+    }
+
+    /**
+     * Ver um produto específico
+     */
     public function show($id)
     {
         return response()->json(
@@ -30,6 +50,9 @@ class ProdutoController extends Controller
         );
     }
 
+    /**
+     * Criar novo produto
+     */
     public function store(ProdutoStoreRequest $request)
     {
         return response()->json(
@@ -38,6 +61,9 @@ class ProdutoController extends Controller
         );
     }
 
+    /**
+     * Atualizar produto existente
+     */
     public function update(ProdutoUpdateRequest $request, $id)
     {
         return response()->json(
@@ -45,6 +71,9 @@ class ProdutoController extends Controller
         );
     }
 
+    /**
+     * Excluir produto
+     */
     public function destroy($id)
     {
         $this->produtoService->deletar($id);
