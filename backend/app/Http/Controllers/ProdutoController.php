@@ -6,6 +6,7 @@ use App\Http\Requests\ProdutoStoreRequest;
 use App\Http\Requests\ProdutoUpdateRequest;
 use App\Services\ProdutoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ProdutoController extends Controller
 {
@@ -18,6 +19,7 @@ class ProdutoController extends Controller
 
     /**
      * Listar produtos com paginação
+     * (qualquer usuário autenticado pode visualizar)
      */
     public function index(Request $request)
     {
@@ -28,6 +30,7 @@ class ProdutoController extends Controller
 
     /**
      * Buscar produtos com filtro (id, nome, preco, descricao)
+     * (qualquer usuário autenticado pode buscar)
      */
     public function search(Request $request)
     {
@@ -42,6 +45,7 @@ class ProdutoController extends Controller
 
     /**
      * Ver um produto específico
+     * (qualquer usuário autenticado pode visualizar)
      */
     public function show($id)
     {
@@ -52,9 +56,12 @@ class ProdutoController extends Controller
 
     /**
      * Criar novo produto
+     * (somente admin e editor)
      */
     public function store(ProdutoStoreRequest $request)
     {
+        Gate::authorize('manage-produtos');
+
         return response()->json(
             $this->produtoService->criar($request->validated()),
             201
@@ -63,9 +70,12 @@ class ProdutoController extends Controller
 
     /**
      * Atualizar produto existente
+     * (somente admin e editor)
      */
     public function update(ProdutoUpdateRequest $request, $id)
     {
+        Gate::authorize('manage-produtos');
+
         return response()->json(
             $this->produtoService->atualizar($id, $request->validated())
         );
@@ -73,9 +83,12 @@ class ProdutoController extends Controller
 
     /**
      * Excluir produto
+     * (somente admin)
      */
     public function destroy($id)
     {
+        Gate::authorize('delete-produtos');
+
         $this->produtoService->deletar($id);
 
         return response()->json(['message' => 'Produto removido com sucesso']);
