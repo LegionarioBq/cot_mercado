@@ -36,6 +36,13 @@ table tr:hover {
   background: #f1f1f1;
 }
 
+/* Colunas centralizadas */
+th.center,
+td.center {
+  text-align: center;
+  vertical-align: middle;
+}
+
 button {
   padding: 6px 12px;
   border: none;
@@ -55,7 +62,7 @@ button[disabled] {
   cursor: not-allowed;
 }
 
-/* Botões de ação */
+/* Botões de ação dentro da tabela */
 button:nth-child(1) {
   background: #f0ad4e;
   color: #fff;
@@ -66,6 +73,7 @@ button:nth-child(2) {
   color: #fff;
 }
 
+/* Estilo geral para formulários da listagem */
 form {
   margin-top: 20px;
   padding: 15px;
@@ -84,4 +92,159 @@ form input {
 form button {
   background: #5cb85c;
   color: #fff;
+}
+
+/* ------------------ */
+/* Layout principal   */
+/* ------------------ */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn-logout {
+  background: #dc3545;
+  color: white;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.paginacao {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+/* ------------------ */
+/* Modais             */
+/* ------------------ */
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* Formulários dentro dos modais */
+#modal-produto form,
+#modal-visualizar form {
+  margin: 0;
+  padding: 15px;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  text-align: left;
+}
+
+/* Inputs dentro dos modais */
+#modal-produto form input,
+#modal-visualizar form input {
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+/* Botões dentro dos modais */
+#modal-produto form button,
+#modal-visualizar form button {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.modal-actions {
+  margin-top: 15px;
+  text-align: center;
+}
+
+/* ------------------ */
+/* Upload customizado */
+/* ------------------ */
+
+.file-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.file-label {
+  background: #005ea2;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease-in-out;
+}
+
+.file-label:hover {
+  background: #00457a;
+}
+
+#file-name {
+  font-size: 14px;
+  color: #555;
+}
+
+/* ------------------ */
+/* Imagens            */
+/* ------------------ */
+
+.thumb {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+/* ------------------ */
+/* Contador descrição */
+/* ------------------ */
+
+#desc-contador {
+  font-size: 12px;
+  color: #777;
+  display: block;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  text-align: right;
 }

@@ -28,7 +28,7 @@ export function carregarLogin() {
       ">
         <h2 style="margin-bottom:1.5rem; font-family:sans-serif;">ERP - Produtos</h2>
 
-        <form id="form-login" style="display:flex; flex-direction:column; gap:1rem;">
+        <form id="form-login" style="display:flex; flex-direction:column; gap:1rem; background:transparent; box-shadow:none; padding:0;">
           <div style="display:flex; align-items:center; border:1px solid #ccc; border-radius:5px; padding:0.5rem; background:#f8f9fa;">
             <span style="margin-right:0.5rem;">👤</span>
             <input 
@@ -84,26 +84,22 @@ export function carregarLogin() {
       const token = response.data.token;
       const user = response.data.user;
 
-      // 🔐 Salva token e tipo de usuário no localStorage
+      // Salva token e tipo de usuário no localStorage
       localStorage.setItem("auth_token", token);
-      localStorage.setItem("user_type", user.type); // 👈 salva se é admin/editor/viewer
+      localStorage.setItem("user_type", user.type);
 
-      // 🔑 Configura Axios com o token
+      // Configura Axios com o token
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      // 🔍 Debug no console
-      console.log("🔑 Usuário logado:", user);
-      console.log("👤 Tipo de usuário:", user.type);
 
       Swal.fire({
         icon: "success",
         title: "Login realizado!",
-        text: `Bem-vindo ${user.name} 🚀`,
+        text: `Bem-vindo ${user.name} `,
         timer: 2000,
         showConfirmButton: false,
       });
 
-      carregarProdutos(); // troca para tela de produtos
+      carregarProdutos();
     } catch (error: any) {
       Swal.fire({
         icon: "error",

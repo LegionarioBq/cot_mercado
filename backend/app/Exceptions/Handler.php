@@ -36,7 +36,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * 🔐 Personaliza resposta para usuários não autenticados (401)
+     * Personaliza resposta para usuários não autenticados (401)
      */
     protected function unauthenticated($request, AuthenticationException $exception)
     {
@@ -46,7 +46,7 @@ class Handler extends ExceptionHandler
     }
 
     /**
-     * 🔒 Personaliza resposta para erros de autorização (403)
+     * Personaliza resposta para erros de autorização (403)
      */
     public function render($request, Throwable $exception)
     {

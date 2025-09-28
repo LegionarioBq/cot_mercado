@@ -4,10 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\AuthController;
 
-// 🔓 Público
+// Público
 Route::post('/login', [AuthController::class, 'login']);
 
-// 🔐 Requer login
+// Requer login
 Route::middleware('auth:sanctum')->group(function () {
     // Autenticação
     Route::post('/logout', [AuthController::class, 'logout']);

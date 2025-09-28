@@ -135,37 +135,37 @@ class ProdutoService
         $hash = sha1_file($file->getRealPath());
 
         if (ProdutoImage::where('hash', $hash)->exists()) {
-            throw new UnprocessableEntityHttpException("❌ Essa imagem já foi registrada no sistema.");
+            throw new UnprocessableEntityHttpException("Essa imagem já foi registrada no sistema.");
         }
 
         $filename = "{$hash}.{$ext}";
 
-        // ✅ Salva dentro de storage/app/public/img
+        //Salva dentro de storage/app/public/img
         $path = $file->storeAs("img", $filename, 'public');
 
-        // ⚠️ Agora salva no BD apenas como "img/xxxx.webp"
+        //Agora salva no BD apenas como "img/xxxx.webp"
         $relativePath = "img/{$filename}";
 
         // 🔎 Log para confirmar salvamento
         if (Storage::exists("public/img/{$filename}")) {
-            Log::info("✅ Imagem salva com sucesso no storage", [
+            Log::info("Imagem salva com sucesso no storage", [
                 'produto_id' => $produto->id,
                 'hash'       => $hash,
                 'path'       => $relativePath,
                 'url'        => "/{$relativePath}",
             ]);
         } else {
-            Log::error("❌ Erro ao salvar imagem no storage", [
+            Log::error("Erro ao salvar imagem no storage", [
                 'produto_id' => $produto->id,
                 'hash'       => $hash,
                 'path'       => $relativePath,
             ]);
         }
 
-        // 📝 Cria registro no banco
+        // Cria registro no banco
         $produto->imagens()->create([
             'hash'       => $hash,
-            'path'       => $relativePath, // 👈 agora correto
+            'path'       => $relativePath,
             'mime_type'  => $mime,
             'size'       => $size,
         ]);

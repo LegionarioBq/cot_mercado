@@ -1,12 +1,10 @@
-// src/pages/produtos.ts
-
 import api from "../api";
 import Swal from "sweetalert2";
 import { carregarLogin } from "./login";
 
 interface ProdutoImage {
   path: string;
-  url: string; // ✅ agora vem direto do backend
+  url: string;
 }
 
 interface Produto {
@@ -21,12 +19,12 @@ interface Produto {
 let paginaAtual = 1;
 const itensPorPagina = 5;
 let termoBusca = "";
-let filtroCampo = "nome"; // padrão
+let filtroCampo = "nome";
 
-// ✅ URL base do backend (APP_URL do Laravel)
+// URL base do backend (APP_URL do Laravel)
 const API_URL = "http://127.0.0.1:8000";
 
-// ✅ Aplica o token do localStorage (se existir)
+// Aplica o token do localStorage (se existir)
 const token = localStorage.getItem("auth_token");
 if (token) {
   api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -62,18 +60,16 @@ export async function carregarProdutos(page: number = 1) {
     if (!app) return;
 
     let html = `
-      <!-- 🏷️ Cabeçalho -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h1 style="margin:0;">Gestão de Produtos</h1>
-        <button id="btn-logout" style="background:#dc3545; color:white; border:none; padding:0.5rem 1rem; border-radius:5px; cursor:pointer;">
-          🚪 Logout
-        </button>
+      <!-- Cabeçalho -->
+      <div class="header">
+        <h1>Gestão de Produtos</h1>
+        <button id="btn-logout" class="btn-logout">🚪 Logout</button>
       </div>
 
-      <!-- 🔍 Título da lista e filtro -->
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-        <h2 style="margin:0;">Lista de Produtos</h2>
-        <div style="display:flex; gap:0.5rem;">
+      <!-- Título da lista e filtro -->
+      <div class="toolbar">
+        <h2>Lista de Produtos</h2>
+        <div class="actions">
           <input type="text" id="campo-busca" placeholder="Buscar..." value="${termoBusca}" />
           <select id="campo-filtro">
             <option value="id" ${filtroCampo === "id" ? "selected" : ""}>ID</option>
@@ -88,17 +84,17 @@ export async function carregarProdutos(page: number = 1) {
         </div>
       </div>
 
-      <!-- 📋 Tabela -->
-      <table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse:collapse;">
+      <!-- Tabela -->
+      <table>
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Imagem</th>
+            <th class="center">ID</th>
+            <th class="center">Imagem</th>
             <th>Nome</th>
             <th>Preço</th>
-            <th>Quantidade</th>
+            <th class="center">Quantidade</th>
             <th>Descrição</th>
-            <th>Ações</th>
+            <th class="center">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -106,24 +102,23 @@ export async function carregarProdutos(page: number = 1) {
 
     produtos.forEach((p) => {
       const preco = typeof p.preco === "string" ? parseFloat(p.preco) : p.preco;
-      const imgUrl =
-        p.imagens && p.imagens.length > 0 ? p.imagens[0].url : ""; // ✅ pega url já pronta
+      const imgUrl = p.imagens && p.imagens.length > 0 ? p.imagens[0].url : "";
 
       html += `
         <tr>
-          <td>${p.id}</td>
-          <td>
+          <td class="center">${p.id}</td>
+          <td class="center">
             ${
               imgUrl
-                ? `<img src="${imgUrl}" alt="produto" width="54" height="54" style="object-fit:cover;border-radius:4px;"/>`
+                ? `<img src="${imgUrl}" alt="produto" class="thumb"/>`
                 : "—"
             }
           </td>
           <td>${p.nome}</td>
-          <td>R$ ${preco.toFixed(2)}</td>
-          <td>${p.quantidade}</td>
+          <td>${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(preco)}</td>
+          <td class="center">${p.quantidade}</td>
           <td>${p.descricao || ""}</td>
-          <td>
+          <td class="center">
             <button onclick="visualizarProduto(${p.id})">👁️</button>
             <button onclick="editarProduto(${p.id}, '${p.nome}', ${preco}, ${p.quantidade}, '${p.descricao || ""}')">✏️</button>
             <button onclick="excluirProduto(${p.id})">🗑️</button>
@@ -134,8 +129,8 @@ export async function carregarProdutos(page: number = 1) {
 
     html += `</tbody></table>`;
 
-    // 📄 Paginação
-    html += `<div class="paginacao" style="margin-top:1rem; text-align:center;">`;
+    // Paginação
+    html += `<div class="paginacao">`;
     if (page > 1) {
       html += `<button onclick="carregarProdutos(${page - 1})">⬅️ Anterior</button>`;
     }
@@ -150,31 +145,44 @@ export async function carregarProdutos(page: number = 1) {
     }
     html += `</div>`;
 
-    // ➕ Modal oculto
+    // Modal de adicionar/editar produto
     html += `
-      <div id="modal-produto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-           background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:20px; border-radius:8px; width:350px;">
+      <div id="modal-produto" class="modal">
+        <div class="modal-content">
           <h3 id="modal-titulo">Adicionar Produto</h3>
-          <form id="form-produto" enctype="multipart/form-data">
+          <form id="form-produto" enctype="multipart/form-data" class="modal-form">
             <input type="hidden" id="produto-id" />
-            <input type="text" id="nome" placeholder="Nome" required /><br/><br/>
-            <input type="number" id="preco" placeholder="Preço" required step="0.01" min="0"/><br/><br/>
-            <input type="number" id="quantidade" placeholder="Quantidade" required min="0"/><br/><br/>
-            <input type="text" id="descricao" placeholder="Descrição" /><br/><br/>
-            <input type="file" id="imagem" accept="image/png,image/jpeg,image/webp"/><br/><br/>
-            <button type="submit">Salvar</button>
-            <button type="button" id="fechar-modal">Cancelar</button>
+            <input type="text" id="nome" placeholder="Nome" required />
+            <input type="text" id="preco" placeholder="Preço" required />
+            <input type="number" id="quantidade" placeholder="Quantidade" required min="0"/>
+            <input type="text" id="descricao" placeholder="Descrição" maxlength="255"/>
+            <small id="desc-contador">0 / 255</small>
+
+            <!-- Upload customizado -->
+            <div class="file-upload">
+              <input type="file" id="imagem" accept="image/png,image/jpeg,image/webp" hidden />
+              <label for="imagem" class="file-label">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M.5 9.9a.5.5 0 0 1 .5-.5h4.5V1.5a.5.5 0 0 1 1 0v7.9H12a.5.5 0 0 1 .354.854l-5 5a.5.5 0 0 1-.708 0l-5-5A.5.5 0 0 1 .5 9.9z"/>
+                </svg>
+                Enviar imagem
+              </label>
+              <span id="file-name">Nenhum arquivo escolhido</span>
+            </div>
+
+            <div class="modal-actions">
+              <button type="submit">Salvar</button>
+              <button type="button" id="fechar-modal">Cancelar</button>
+            </div>
           </form>
         </div>
       </div>
 
       <!-- Modal de visualização -->
-      <div id="modal-visualizar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; 
-           background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-        <div style="background:#fff; padding:20px; border-radius:8px; width:350px; text-align:center;">
+      <div id="modal-visualizar" class="modal">
+        <div class="modal-content">
           <h3>Detalhes do Produto</h3>
-          <img id="view-img" src="" width="54" height="54" style="object-fit:cover;border-radius:4px;margin-bottom:1rem;"/>
+          <img id="view-img" src="" class="thumb"/>
           <p id="view-desc"></p>
           <button id="fechar-visualizar">Fechar</button>
         </div>
@@ -208,7 +216,7 @@ export async function carregarProdutos(page: number = 1) {
       document.getElementById("modal-visualizar")!.style.display = "none";
     });
 
-    // ✅ Logout
+    // Logout
     document.getElementById("btn-logout")?.addEventListener("click", async () => {
       try {
         await api.post("/logout");
@@ -220,6 +228,45 @@ export async function carregarProdutos(page: number = 1) {
         carregarLogin();
       });
     });
+
+    // Mostrar nome do arquivo selecionado
+    const fileInput = document.getElementById("imagem") as HTMLInputElement;
+    const fileNameSpan = document.getElementById("file-name") as HTMLElement;
+    if (fileInput) {
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files && fileInput.files.length > 0) {
+          fileNameSpan.textContent = fileInput.files[0].name;
+        } else {
+          fileNameSpan.textContent = "Nenhum arquivo escolhido";
+        }
+      });
+    }
+
+    // Máscara de preço
+    const precoInput = document.getElementById("preco") as HTMLInputElement;
+    if (precoInput) {
+      precoInput.addEventListener("input", () => {
+        let value = precoInput.value.replace(/\D/g, "");
+        if (value) {
+          const numberValue = parseFloat(value) / 100;
+          precoInput.value = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(numberValue);
+        } else {
+          precoInput.value = "";
+        }
+      });
+    }
+
+    // Contador descrição
+    const descInput = document.getElementById("descricao") as HTMLInputElement;
+    const contador = document.getElementById("desc-contador") as HTMLElement;
+    if (descInput && contador) {
+      descInput.addEventListener("input", () => {
+        contador.textContent = `${descInput.value.length} / 255`;
+      });
+    }
 
     const form = document.getElementById("form-produto") as HTMLFormElement;
     form.onsubmit = async (e) => {
@@ -260,7 +307,9 @@ function abrirModal(id?: number, nome?: string, preco?: number, quantidade?: num
   const modal = document.getElementById("modal-produto")!;
   (document.getElementById("produto-id") as HTMLInputElement).value = id ? id.toString() : "";
   (document.getElementById("nome") as HTMLInputElement).value = nome || "";
-  (document.getElementById("preco") as HTMLInputElement).value = preco ? preco.toString() : "";
+  (document.getElementById("preco") as HTMLInputElement).value = preco
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(preco)
+    : "";
   (document.getElementById("quantidade") as HTMLInputElement).value = quantidade ? quantidade.toString() : "";
   (document.getElementById("descricao") as HTMLInputElement).value = descricao || "";
 
@@ -275,12 +324,16 @@ function fecharModal() {
 async function salvarProduto() {
   const id = (document.getElementById("produto-id") as HTMLInputElement).value;
   const nome = (document.getElementById("nome") as HTMLInputElement).value;
-  const preco = parseFloat((document.getElementById("preco") as HTMLInputElement).value);
+
+  const precoStr = (document.getElementById("preco") as HTMLInputElement).value;
+  const preco = precoStr
+    ? parseFloat(precoStr.replace(/[R$\s.]/g, "").replace(",", "."))
+    : 0;
+
   const quantidade = parseInt((document.getElementById("quantidade") as HTMLInputElement).value);
   const descricao = (document.getElementById("descricao") as HTMLInputElement).value;
   const imagem = (document.getElementById("imagem") as HTMLInputElement).files?.[0];
 
-  // ✅ validações
   if (preco < 0 || quantidade < 0) {
     Swal.fire("❌ Erro", "Preço e quantidade não podem ser negativos.", "error");
     return;
@@ -326,7 +379,7 @@ async function salvarProduto() {
   }
 }
 
-// 👁️ Visualizar produto
+// Visualizar produto
 ;(window as any).visualizarProduto = async (id: number) => {
   try {
     const resp = await api.get(`/produtos/${id}`);
@@ -335,7 +388,7 @@ async function salvarProduto() {
     const modal = document.getElementById("modal-visualizar")!;
     const imgUrl =
       produto.imagens && produto.imagens.length > 0
-        ? produto.imagens[0].url // ✅ agora usa url
+        ? produto.imagens[0].url
         : "";
     (document.getElementById("view-img") as HTMLImageElement).src = imgUrl;
     (document.getElementById("view-desc") as HTMLParagraphElement).textContent =

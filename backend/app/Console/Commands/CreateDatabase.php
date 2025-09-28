@@ -21,9 +21,9 @@ class CreateDatabase extends Command
 
         try {
             DB::statement("CREATE DATABASE IF NOT EXISTS `$dbName` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-            $this->info("✅ Banco de dados `$dbName` criado com sucesso!");
+            $this->info("Banco de dados `$dbName` criado com sucesso!");
         } catch (\Exception $e) {
-            $this->error("❌ Erro ao criar banco `$dbName`: " . $e->getMessage());
+            $this->error("Erro ao criar banco `$dbName`: " . $e->getMessage());
         }
     }
 
@@ -31,14 +31,14 @@ class CreateDatabase extends Command
     {
         $path = base_path('.env.testing');
         if (!file_exists($path)) {
-            $this->warn("⚠️ Arquivo .env.testing não encontrado.");
+            $this->warn("Arquivo .env.testing não encontrado.");
             return;
         }
 
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach ($lines as $line) {
             if (str_starts_with(trim($line), '#')) {
-                continue; // ignora comentários
+                continue;
             }
             [$name, $value] = array_pad(explode('=', $line, 2), 2, null);
             if ($name && $value !== null) {
@@ -50,6 +50,6 @@ class CreateDatabase extends Command
             }
         }
 
-        $this->info("🔄 Variáveis de ambiente carregadas do .env.testing");
+        $this->info("Variáveis de ambiente carregadas do .env.testing");
     }
 }

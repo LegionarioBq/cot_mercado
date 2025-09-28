@@ -35,7 +35,6 @@ class ProdutoSeeder extends Seeder
             ['nome' => 'Câmera Logitech C920', 'preco' => 500.00, 'descricao' => 'Webcam Full HD para videoconferência'],
         ];
 
-        // Insere todos os produtos de uma vez
         Produto::insert($produtos);
     }
 }

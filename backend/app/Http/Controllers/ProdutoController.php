@@ -77,9 +77,9 @@ class ProdutoController extends Controller
             ], Response::HTTP_FORBIDDEN);
         }
 
-        // 🔹 Cria produto
+        // Cria produto
         $dados   = $request->validated();
-        $imagem  = $request->file('imagem'); // se existir
+        $imagem  = $request->file('imagem');
 
         return response()->json(
             $this->produtoService->criar($dados, $imagem),
@@ -109,13 +109,13 @@ class ProdutoController extends Controller
             ]);
 
             return response()->json([
-                'message' => '❌ Apenas administradores e editores podem editar produtos.'
+                'message' => 'Apenas administradores e editores podem editar produtos.'
             ], Response::HTTP_FORBIDDEN);
         }
 
-        // 🔹 Atualiza produto
+        // Atualiza produto
         $dados   = $request->validated();
-        $imagem  = $request->file('imagem'); // se existir
+        $imagem  = $request->file('imagem');
 
         return response()->json(
             $this->produtoService->atualizar($id, $dados, $imagem)
@@ -144,14 +144,14 @@ class ProdutoController extends Controller
             ]);
 
             return response()->json([
-                'message' => '❌ Apenas administradores podem excluir produtos.'
+                'message' => 'Apenas administradores podem excluir produtos.'
             ], Response::HTTP_FORBIDDEN);
         }
 
         $this->produtoService->deletar($id);
 
         return response()->json([
-            'message' => '✅ Produto removido com sucesso'
+            'message' => 'Produto removido com sucesso'
         ]);
     }
 }

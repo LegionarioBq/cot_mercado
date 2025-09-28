@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('type')->default('viewer')->after('password'); 
-            // valores possíveis: admin, editor, viewer
+            $table->string('type')->default('viewer')->after('password');
         });
     }
 

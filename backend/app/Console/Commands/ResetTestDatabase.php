@@ -27,20 +27,20 @@ class ResetTestDatabase extends Command
      */
     public function handle(): int
     {
-        // 🔄 Carregar variáveis do .env.testing
+        // Carregar variáveis do .env.testing
         $this->loadEnvTesting();
-        $this->info("🔄 Variáveis de ambiente carregadas do .env.testing");
+        $this->info("Variáveis de ambiente carregadas do .env.testing");
 
         $dbName = trim(env('DB_DATABASE', 'mercprodutos_test'), '"');
 
         if ($dbName !== 'mercprodutos_test') {
-            $this->error("❌ O banco configurado não é de teste. Verifique seu .env.testing. Valor atual: {$dbName}");
+            $this->error("O banco configurado não é de teste. Verifique seu .env.testing. Valor atual: {$dbName}");
             return Command::FAILURE;
         }
 
         if (
             !$this->option('force') &&
-            !$this->confirm(" ⚠️ Isso vai apagar todo o banco `{$dbName}`. Deseja continuar?", false)
+            !$this->confirm("Isso vai apagar todo o banco `{$dbName}`. Deseja continuar?", false)
         ) {
             $this->warn("Operação cancelada.");
             return Command::SUCCESS;
@@ -49,13 +49,13 @@ class ResetTestDatabase extends Command
         try {
             // Dropar o banco de teste
             DB::statement("DROP DATABASE IF EXISTS `{$dbName}`");
-            $this->warn("🗑️ Banco `{$dbName}` removido.");
+            $this->warn("Banco `{$dbName}` removido.");
 
             // Criar novamente
             DB::statement("CREATE DATABASE `{$dbName}`");
-            $this->info("✅ Banco `{$dbName}` recriado.");
+            $this->info("Banco `{$dbName}` recriado.");
 
-            // 🔄 Forçar o Laravel a usar o banco recém-criado
+            // Forçar o Laravel a usar o banco recém-criado
             config(['database.connections.mysql.database' => $dbName]);
             DB::purge('mysql');
             DB::reconnect('mysql');
@@ -66,7 +66,7 @@ class ResetTestDatabase extends Command
                 '--env' => 'testing',
             ]);
 
-            $this->info("📦 Migrations + Seeders rodados no banco `{$dbName}`.");
+            $this->info("Migrations + Seeders rodados no banco `{$dbName}`.");
         } catch (\Throwable $e) {
             $this->error("❌ Erro: " . $e->getMessage());
             return Command::FAILURE;
