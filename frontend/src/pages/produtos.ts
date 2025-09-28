@@ -291,7 +291,7 @@ export async function carregarProdutos(page: number = 1) {
         title: "Erro interno no servidor",
         text: "Ocorreu um erro no backend (500). Verifique os logs do Laravel.",
       }).then(() => {
-        console.error("❌ Erro 500 no backend:", error.response?.data);
+        console.error("Erro 500 no backend:", error.response?.data);
       });
     } else {
       Swal.fire({
@@ -335,16 +335,16 @@ async function salvarProduto() {
   const imagem = (document.getElementById("imagem") as HTMLInputElement).files?.[0];
 
   if (preco < 0 || quantidade < 0) {
-    Swal.fire("❌ Erro", "Preço e quantidade não podem ser negativos.", "error");
+    Swal.fire("Erro", "Preço e quantidade não podem ser negativos.", "error");
     return;
   }
   if (imagem) {
     if (imagem.size > 10 * 1024 * 1024) {
-      Swal.fire("❌ Erro", "A imagem não pode ultrapassar 10MB.", "error");
+      Swal.fire("Erro", "A imagem não pode ultrapassar 10MB.", "error");
       return;
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(imagem.type)) {
-      Swal.fire("❌ Erro", "Formato inválido. Permitidos: jpeg, png, webp.", "error");
+      Swal.fire("Erro", "Formato inválido. Permitidos: jpeg, png, webp.", "error");
       return;
     }
   }
@@ -361,12 +361,12 @@ async function salvarProduto() {
       await api.post(`produtos/${id}?_method=PUT`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      Swal.fire("✅ Sucesso", "Produto atualizado com sucesso!", "success");
+      Swal.fire("Sucesso", "Produto atualizado com sucesso!", "success");
     } else {
       await api.post("produtos", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      Swal.fire("✅ Sucesso", "Produto criado com sucesso!", "success");
+      Swal.fire("Sucesso", "Produto criado com sucesso!", "success");
     }
     fecharModal();
     await carregarProdutos(paginaAtual);
@@ -424,7 +424,7 @@ async function salvarProduto() {
 
   try {
     await api.delete(`produtos/${id}`);
-    Swal.fire("✅ Sucesso", "Produto excluído com sucesso!", "success");
+    Swal.fire("Sucesso", "Produto excluído com sucesso!", "success");
     await carregarProdutos(paginaAtual);
   } catch (error: any) {
     Swal.fire({
