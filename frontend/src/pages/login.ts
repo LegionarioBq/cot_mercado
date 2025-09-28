@@ -1,15 +1,15 @@
-import { carregarProdutos } from "./produtos";
+import api from "../api";
 import Swal from "sweetalert2";
+import { carregarProdutos } from "./produtos";
 
 export function carregarLogin() {
   const app = document.getElementById("app");
   if (!app) return;
 
-  // garantir que body ocupe 100% da tela
   document.body.style.margin = "0";
   document.body.style.height = "100vh";
   document.body.style.width = "100vw";
-  document.body.style.background = "#f5f5f5"; // fundo simples cinza
+  document.body.style.background = "#f5f5f5";
 
   app.innerHTML = `
     <div style="
@@ -18,8 +18,6 @@ export function carregarLogin() {
       align-items:center;
       height:100vh;
       width:100vw;
-      margin:0;
-      background: linear-gradient(135deg, #1cb5e0, #000851);
     ">
       <div style="
         background:white;
@@ -28,26 +26,20 @@ export function carregarLogin() {
         width:350px;
         text-align:center;
       ">
-
-        <!-- Título -->
         <h2 style="margin-bottom:1.5rem; font-family:sans-serif;">ERP - Produtos</h2>
 
-        <!-- Formulário -->
         <form id="form-login" style="display:flex; flex-direction:column; gap:1rem;">
-          
-          <!-- Campo usuário -->
           <div style="display:flex; align-items:center; border:1px solid #ccc; border-radius:5px; padding:0.5rem; background:#f8f9fa;">
             <span style="margin-right:0.5rem;">👤</span>
             <input 
-              type="text" 
+              type="email" 
               id="usuario" 
-              placeholder="Usuário" 
+              placeholder="E-mail" 
               required 
               style="flex:1; border:none; outline:none; background:transparent;"
             />
           </div>
 
-          <!-- Campo senha -->
           <div style="display:flex; align-items:center; border:1px solid #ccc; border-radius:5px; padding:0.5rem; background:#f8f9fa;">
             <span style="margin-right:0.5rem;">🔒</span>
             <input 
@@ -59,7 +51,6 @@ export function carregarLogin() {
             />
           </div>
 
-          <!-- Botão -->
           <button 
             type="submit" 
             style="
@@ -84,34 +75,40 @@ export function carregarLogin() {
   form.onsubmit = async (e) => {
     e.preventDefault();
 
-    const usuario = (document.getElementById("usuario") as HTMLInputElement).value;
-    const senha = (document.getElementById("senha") as HTMLInputElement).value;
-
-    console.log("Tentando login:", usuario);
+    const email = (document.getElementById("usuario") as HTMLInputElement).value;
+    const password = (document.getElementById("senha") as HTMLInputElement).value;
 
     try {
-      // 🚧 Aqui futuramente vai a validação real no backend
-      if (usuario && senha) {
-        await Swal.fire({
-          icon: "success",
-          title: "Login realizado com sucesso!",
-          text: `Bem-vindo, ${usuario}!`,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        carregarProdutos(); // troca para tela de produtos
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Usuário ou senha inválidos",
-          text: "Por favor, tente novamente.",
-        });
-      }
+      const response = await api.post("/login", { email, password });
+
+      const token = response.data.token;
+      const user = response.data.user;
+
+      // 🔐 Salva token e tipo de usuário no localStorage
+      localStorage.setItem("auth_token", token);
+      localStorage.setItem("user_type", user.type); // 👈 salva se é admin/editor/viewer
+
+      // 🔑 Configura Axios com o token
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // 🔍 Debug no console
+      console.log("🔑 Usuário logado:", user);
+      console.log("👤 Tipo de usuário:", user.type);
+
+      Swal.fire({
+        icon: "success",
+        title: "Login realizado!",
+        text: `Bem-vindo ${user.name} 🚀`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      carregarProdutos(); // troca para tela de produtos
     } catch (error: any) {
       Swal.fire({
         icon: "error",
-        title: "Erro no servidor",
-        text: error?.message || "Ocorreu um problema ao processar o login.",
+        title: "Erro no login",
+        text: error.response?.data?.message || "Usuário ou senha inválidos.",
       });
     }
   };

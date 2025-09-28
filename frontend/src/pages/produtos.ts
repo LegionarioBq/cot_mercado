@@ -1,5 +1,6 @@
 import api from "../api";
 import Swal from "sweetalert2";
+import { carregarLogin } from "./login";
 
 interface Produto {
   id: number;
@@ -12,6 +13,12 @@ let paginaAtual = 1;
 const itensPorPagina = 5;
 let termoBusca = "";
 let filtroCampo = "nome"; // padrão
+
+// ✅ Aplica o token do localStorage (se existir)
+const token = localStorage.getItem("auth_token");
+if (token) {
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
 
 export async function carregarProdutos(page: number = 1) {
   try {
@@ -43,10 +50,15 @@ export async function carregarProdutos(page: number = 1) {
     if (!app) return;
 
     let html = `
-      <!-- 🏷️ Título centralizado -->
-      <h1 style="text-align:center; margin-bottom:1rem;">Gestão de Produtos</h1>
+      <!-- 🏷️ Cabeçalho -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h1 style="margin:0;">Gestão de Produtos</h1>
+        <button id="btn-logout" style="background:#dc3545; color:white; border:none; padding:0.5rem 1rem; border-radius:5px; cursor:pointer;">
+          🚪 Logout
+        </button>
+      </div>
 
-      <!-- 🔍 Título da lista e filtro na mesma linha -->
+      <!-- 🔍 Título da lista e filtro -->
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
         <h2 style="margin:0;">Lista de Produtos</h2>
         <div style="display:flex; gap:0.5rem;">
@@ -166,6 +178,19 @@ export async function carregarProdutos(page: number = 1) {
       fecharModal();
     });
 
+    // ✅ Logout
+    document.getElementById("btn-logout")?.addEventListener("click", async () => {
+      try {
+        await api.post("/logout");
+      } catch (e) {
+        console.warn("Erro ao chamar logout na API:", e);
+      }
+      localStorage.removeItem("auth_token");
+      Swal.fire("Até logo!", "Você saiu da aplicação.", "success").then(() => {
+        carregarLogin();
+      });
+    });
+
     const form = document.getElementById("form-produto") as HTMLFormElement;
     form.onsubmit = async (e) => {
       e.preventDefault();
@@ -174,11 +199,31 @@ export async function carregarProdutos(page: number = 1) {
 
     paginaAtual = page;
   } catch (error: any) {
-    Swal.fire({
-      icon: "error",
-      title: "Erro ao carregar produtos",
-      text: error?.message || "Tente novamente mais tarde.",
-    });
+    // ⚠️ Se deu erro 401, redireciona para login
+    if (error.response?.status === 401) {
+      Swal.fire({
+        icon: "warning",
+        title: "Sessão expirada",
+        text: "Faça login novamente para continuar.",
+      }).then(() => {
+        localStorage.removeItem("auth_token");
+        carregarLogin();
+      });
+    } else if (error.response?.status === 500) {
+      Swal.fire({
+        icon: "error",
+        title: "Erro interno no servidor",
+        text: "Ocorreu um erro no backend (500). Verifique os logs do Laravel.",
+      }).then(() => {
+        console.error("❌ Erro 500 no backend:", error.response?.data);
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Erro ao carregar produtos",
+        text: error?.message || "Tente novamente mais tarde.",
+      });
+    }
   }
 }
 
@@ -218,7 +263,7 @@ async function salvarProduto() {
     Swal.fire({
       icon: "error",
       title: "Erro ao salvar produto",
-      text: error?.message || "Tente novamente.",
+      text: error?.response?.data?.message || "Tente novamente.",
     });
   }
 }
@@ -247,7 +292,7 @@ async function salvarProduto() {
     Swal.fire({
       icon: "error",
       title: "Erro ao excluir produto",
-      text: error?.message || "Tente novamente.",
+      text: error?.response?.data?.message || "Tente novamente.",
     });
   }
 };

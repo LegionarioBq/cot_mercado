@@ -24,14 +24,16 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // 🔐 Permissão para gerenciar produtos (criar/editar)
+        // 🔐 Admin e Editor podem criar e editar produtos
         Gate::define('manage-produtos', function (User $user) {
-            return in_array($user->type, ['admin', 'editor']);
+            $type = strtolower(trim($user->type)); // 🔥 normaliza o valor
+            return in_array($type, ['admin', 'editor']);
         });
 
-        // 🔐 Admin e editor podem excluir
+        // 🔐 Admin e Editor também podem excluir
         Gate::define('delete-produtos', function (User $user) {
-            return in_array($user->type, ['admin', 'editor']);
+            $type = strtolower(trim($user->type)); // 🔥 normaliza o valor
+            return in_array($type, ['admin']);
         });
     }
 }

@@ -7,6 +7,8 @@ use App\Http\Requests\ProdutoUpdateRequest;
 use App\Services\ProdutoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log; // 👈 Import do Log
+use Symfony\Component\HttpFoundation\Response;
 
 class ProdutoController extends Controller
 {
@@ -19,7 +21,6 @@ class ProdutoController extends Controller
 
     /**
      * Listar produtos com paginação
-     * (qualquer usuário autenticado pode visualizar)
      */
     public function index(Request $request)
     {
@@ -30,7 +31,6 @@ class ProdutoController extends Controller
 
     /**
      * Buscar produtos com filtro (id, nome, preco, descricao)
-     * (qualquer usuário autenticado pode buscar)
      */
     public function search(Request $request)
     {
@@ -45,7 +45,6 @@ class ProdutoController extends Controller
 
     /**
      * Ver um produto específico
-     * (qualquer usuário autenticado pode visualizar)
      */
     public function show($id)
     {
@@ -55,26 +54,58 @@ class ProdutoController extends Controller
     }
 
     /**
-     * Criar novo produto
-     * (somente admin e editor)
+     * Criar novo produto (somente admin e editor)
      */
     public function store(ProdutoStoreRequest $request)
     {
-        Gate::authorize('manage-produtos');
+        $user = auth()->user();
+        Log::info('👤 Tentando criar produto', [
+            'id' => $user->id ?? null,
+            'email' => $user->email ?? null,
+            'type' => $user->type ?? null,
+        ]);
+
+        if (! Gate::allows('manage-produtos')) {
+            Log::warning('🚫 Acesso negado ao criar produto', [
+                'id' => $user->id ?? null,
+                'email' => $user->email ?? null,
+                'type' => $user->type ?? null,
+            ]);
+
+            return response()->json([
+                'message' => '❌ Apenas administradores e editores podem criar produtos.'
+            ], Response::HTTP_FORBIDDEN);
+        }
 
         return response()->json(
             $this->produtoService->criar($request->validated()),
-            201
+            Response::HTTP_CREATED
         );
     }
 
     /**
-     * Atualizar produto existente
-     * (somente admin e editor)
+     * Atualizar produto existente (somente admin e editor)
      */
     public function update(ProdutoUpdateRequest $request, $id)
     {
-        Gate::authorize('manage-produtos');
+        $user = auth()->user();
+        Log::info('👤 Tentando atualizar produto', [
+            'id' => $user->id ?? null,
+            'email' => $user->email ?? null,
+            'type' => $user->type ?? null,
+        ]);
+
+        if (! Gate::allows('manage-produtos')) {
+            Log::warning('🚫 Acesso negado ao atualizar produto', [
+                'id' => $user->id ?? null,
+                'email' => $user->email ?? null,
+                'type' => $user->type ?? null,
+            ]);
+
+            return response()->json([
+                'message' => '❌ Apenas administradores e editores podem editar produtos.'
+            ], Response::HTTP_FORBIDDEN);
+        }
 
         return response()->json(
             $this->produtoService->atualizar($id, $request->validated())
@@ -82,15 +113,35 @@ class ProdutoController extends Controller
     }
 
     /**
-     * Excluir produto
-     * (somente admin)
+     * Excluir produto (somente admin e editor)
      */
     public function destroy($id)
     {
-        Gate::authorize('delete-produtos');
+        $user = auth()->user();
+        Log::info('👤 Tentando excluir produto', [
+            'id' => $user->id ?? null,
+            'email' => $user->email ?? null,
+            'type' => $user->type ?? null,
+            'produto_id' => $id,
+        ]);
+
+        if (! Gate::allows('delete-produtos')) {
+            Log::warning('🚫 Acesso negado ao excluir produto', [
+                'id' => $user->id ?? null,
+                'email' => $user->email ?? null,
+                'type' => $user->type ?? null,
+                'produto_id' => $id,
+            ]);
+
+            return response()->json([
+                'message' => '❌ Apenas administradores podem excluir produtos.'
+            ], Response::HTTP_FORBIDDEN);
+        }
 
         $this->produtoService->deletar($id);
 
-        return response()->json(['message' => 'Produto removido com sucesso']);
+        return response()->json([
+            'message' => '✅ Produto removido com sucesso'
+        ]);
     }
 }
