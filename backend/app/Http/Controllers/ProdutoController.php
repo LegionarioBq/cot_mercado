@@ -7,7 +7,7 @@ use App\Http\Requests\ProdutoUpdateRequest;
 use App\Services\ProdutoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log; // 👈 Import do Log
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class ProdutoController extends Controller
@@ -30,7 +30,7 @@ class ProdutoController extends Controller
     }
 
     /**
-     * Buscar produtos com filtro (id, nome, preco, descricao)
+     * Buscar produtos com filtro (id, nome, preco, quantidade, descricao)
      */
     public function search(Request $request)
     {
@@ -60,16 +60,16 @@ class ProdutoController extends Controller
     {
         $user = auth()->user();
         Log::info('👤 Tentando criar produto', [
-            'id' => $user->id ?? null,
+            'id'    => $user->id ?? null,
             'email' => $user->email ?? null,
-            'type' => $user->type ?? null,
+            'type'  => $user->type ?? null,
         ]);
 
         if (! Gate::allows('manage-produtos')) {
             Log::warning('🚫 Acesso negado ao criar produto', [
-                'id' => $user->id ?? null,
+                'id'    => $user->id ?? null,
                 'email' => $user->email ?? null,
-                'type' => $user->type ?? null,
+                'type'  => $user->type ?? null,
             ]);
 
             return response()->json([
@@ -77,8 +77,12 @@ class ProdutoController extends Controller
             ], Response::HTTP_FORBIDDEN);
         }
 
+        // 🔹 Cria produto
+        $dados   = $request->validated();
+        $imagem  = $request->file('imagem'); // se existir
+
         return response()->json(
-            $this->produtoService->criar($request->validated()),
+            $this->produtoService->criar($dados, $imagem),
             Response::HTTP_CREATED
         );
     }
@@ -90,16 +94,18 @@ class ProdutoController extends Controller
     {
         $user = auth()->user();
         Log::info('👤 Tentando atualizar produto', [
-            'id' => $user->id ?? null,
-            'email' => $user->email ?? null,
-            'type' => $user->type ?? null,
+            'id'         => $user->id ?? null,
+            'email'      => $user->email ?? null,
+            'type'       => $user->type ?? null,
+            'produto_id' => $id,
         ]);
 
         if (! Gate::allows('manage-produtos')) {
             Log::warning('🚫 Acesso negado ao atualizar produto', [
-                'id' => $user->id ?? null,
-                'email' => $user->email ?? null,
-                'type' => $user->type ?? null,
+                'id'         => $user->id ?? null,
+                'email'      => $user->email ?? null,
+                'type'       => $user->type ?? null,
+                'produto_id' => $id,
             ]);
 
             return response()->json([
@@ -107,8 +113,12 @@ class ProdutoController extends Controller
             ], Response::HTTP_FORBIDDEN);
         }
 
+        // 🔹 Atualiza produto
+        $dados   = $request->validated();
+        $imagem  = $request->file('imagem'); // se existir
+
         return response()->json(
-            $this->produtoService->atualizar($id, $request->validated())
+            $this->produtoService->atualizar($id, $dados, $imagem)
         );
     }
 
@@ -119,17 +129,17 @@ class ProdutoController extends Controller
     {
         $user = auth()->user();
         Log::info('👤 Tentando excluir produto', [
-            'id' => $user->id ?? null,
-            'email' => $user->email ?? null,
-            'type' => $user->type ?? null,
+            'id'         => $user->id ?? null,
+            'email'      => $user->email ?? null,
+            'type'       => $user->type ?? null,
             'produto_id' => $id,
         ]);
 
         if (! Gate::allows('delete-produtos')) {
             Log::warning('🚫 Acesso negado ao excluir produto', [
-                'id' => $user->id ?? null,
-                'email' => $user->email ?? null,
-                'type' => $user->type ?? null,
+                'id'         => $user->id ?? null,
+                'email'      => $user->email ?? null,
+                'type'       => $user->type ?? null,
                 'produto_id' => $id,
             ]);
 

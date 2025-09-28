@@ -15,4 +15,12 @@ class Produto extends Model
         'quantidade',
         'descricao',
     ];
+
+    /**
+     * Relacionamento: Produto possui muitas imagens
+     */
+    public function imagens()
+    {
+        return $this->hasMany(ProdutoImage::class, 'produto_id');
+    }
 }
