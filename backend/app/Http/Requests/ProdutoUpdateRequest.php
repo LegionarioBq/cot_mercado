@@ -14,9 +14,18 @@ class ProdutoUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nome' => 'sometimes|string|max:255',
-            'preco' => 'sometimes|numeric',
-            'descricao' => 'nullable|string',
+            'nome'       => ['sometimes', 'string', 'max:255'],
+            'preco'      => ['sometimes', 'numeric', 'min:0'],
+            'quantidade' => ['sometimes', 'integer', 'min:0'],
+            'descricao'  => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'preco.min'      => 'O preço não pode ser negativo.',
+            'quantidade.min' => 'A quantidade não pode ser negativa.',
         ];
     }
 }

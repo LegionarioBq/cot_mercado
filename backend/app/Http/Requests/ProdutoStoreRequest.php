@@ -14,9 +14,18 @@ class ProdutoStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nome' => 'required|string|max:255',
-            'preco' => 'required|numeric',
-            'descricao' => 'nullable|string',
+            'nome'       => ['required', 'string', 'max:255'],
+            'preco'      => ['required', 'numeric', 'min:0'],
+            'quantidade' => ['required', 'integer', 'min:0'],
+            'descricao'  => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'preco.min'      => 'O preço não pode ser negativo.',
+            'quantidade.min' => 'A quantidade não pode ser negativa.',
         ];
     }
 }

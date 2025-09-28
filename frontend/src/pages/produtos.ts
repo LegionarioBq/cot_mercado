@@ -6,6 +6,7 @@ interface Produto {
   id: number;
   nome: string;
   preco: number | string;
+  quantidade: number; // ✅ Novo campo
   descricao?: string;
 }
 
@@ -67,6 +68,7 @@ export async function carregarProdutos(page: number = 1) {
             <option value="id" ${filtroCampo === "id" ? "selected" : ""}>ID</option>
             <option value="nome" ${filtroCampo === "nome" ? "selected" : ""}>Nome</option>
             <option value="preco" ${filtroCampo === "preco" ? "selected" : ""}>Preço</option>
+            <option value="quantidade" ${filtroCampo === "quantidade" ? "selected" : ""}>Quantidade</option>
             <option value="descricao" ${filtroCampo === "descricao" ? "selected" : ""}>Descrição</option>
           </select>
           <button id="btn-buscar">🔍 Buscar</button>
@@ -82,6 +84,7 @@ export async function carregarProdutos(page: number = 1) {
             <th>ID</th>
             <th>Nome</th>
             <th>Preço</th>
+            <th>Quantidade</th>
             <th>Descrição</th>
             <th>Ações</th>
           </tr>
@@ -97,9 +100,10 @@ export async function carregarProdutos(page: number = 1) {
           <td>${p.id}</td>
           <td>${p.nome}</td>
           <td>R$ ${preco.toFixed(2)}</td>
+          <td>${p.quantidade}</td>
           <td>${p.descricao || ""}</td>
           <td>
-            <button onclick="editarProduto(${p.id}, '${p.nome}', ${preco}, '${p.descricao || ""}')">✏️</button>
+            <button onclick="editarProduto(${p.id}, '${p.nome}', ${preco}, ${p.quantidade}, '${p.descricao || ""}')">✏️</button>
             <button onclick="excluirProduto(${p.id})">🗑️</button>
           </td>
         </tr>
@@ -146,7 +150,8 @@ export async function carregarProdutos(page: number = 1) {
           <form id="form-produto">
             <input type="hidden" id="produto-id" />
             <input type="text" id="nome" placeholder="Nome" required /><br/><br/>
-            <input type="number" id="preco" placeholder="Preço" required step="0.01" /><br/><br/>
+            <input type="number" id="preco" placeholder="Preço" required step="0.01" min="0" /><br/><br/>
+            <input type="number" id="quantidade" placeholder="Quantidade" required min="0" /><br/><br/>
             <input type="text" id="descricao" placeholder="Descrição" /><br/><br/>
             <button type="submit">Salvar</button>
             <button type="button" id="fechar-modal">Cancelar</button>
@@ -227,11 +232,12 @@ export async function carregarProdutos(page: number = 1) {
   }
 }
 
-function abrirModal(id?: number, nome?: string, preco?: number, descricao?: string) {
+function abrirModal(id?: number, nome?: string, preco?: number, quantidade?: number, descricao?: string) {
   const modal = document.getElementById("modal-produto")!;
   (document.getElementById("produto-id") as HTMLInputElement).value = id ? id.toString() : "";
   (document.getElementById("nome") as HTMLInputElement).value = nome || "";
   (document.getElementById("preco") as HTMLInputElement).value = preco ? preco.toString() : "";
+  (document.getElementById("quantidade") as HTMLInputElement).value = quantidade ? quantidade.toString() : "";
   (document.getElementById("descricao") as HTMLInputElement).value = descricao || "";
 
   document.getElementById("modal-titulo")!.textContent = id ? "Editar Produto" : "Adicionar Produto";
@@ -247,14 +253,15 @@ async function salvarProduto() {
   const id = (document.getElementById("produto-id") as HTMLInputElement).value;
   const nome = (document.getElementById("nome") as HTMLInputElement).value;
   const preco = parseFloat((document.getElementById("preco") as HTMLInputElement).value);
+  const quantidade = parseInt((document.getElementById("quantidade") as HTMLInputElement).value);
   const descricao = (document.getElementById("descricao") as HTMLInputElement).value;
 
   try {
     if (id) {
-      await api.put(`produtos/${id}`, { nome, preco, descricao });
+      await api.put(`produtos/${id}`, { nome, preco, quantidade, descricao });
       Swal.fire("✅ Sucesso", "Produto atualizado com sucesso!", "success");
     } else {
-      await api.post("produtos", { nome, preco, descricao });
+      await api.post("produtos", { nome, preco, quantidade, descricao });
       Swal.fire("✅ Sucesso", "Produto criado com sucesso!", "success");
     }
     fecharModal();
@@ -268,8 +275,8 @@ async function salvarProduto() {
   }
 }
 
-;(window as any).editarProduto = (id: number, nome: string, preco: number, descricao: string) => {
-  abrirModal(id, nome, preco, descricao);
+;(window as any).editarProduto = (id: number, nome: string, preco: number, quantidade: number, descricao: string) => {
+  abrirModal(id, nome, preco, quantidade, descricao);
 };
 
 ;(window as any).excluirProduto = async (id: number) => {

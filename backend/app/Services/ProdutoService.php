@@ -16,7 +16,7 @@ class ProdutoService
     }
 
     /**
-     * Busca produtos por filtro (id, nome, preco, descricao)
+     * Busca produtos por filtro (id, nome, preco, quantidade, descricao)
      */
     public function buscar(string $filter, ?string $search, int $perPage = 5)
     {
@@ -25,13 +25,18 @@ class ProdutoService
         if (!empty($search)) {
             switch ($filter) {
                 case 'id':
-                    // 🔹 Força o search a int para evitar o erro dos testes
+                    // 🔹 Força o search a int
                     $query->where('id', (int) $search);
                     break;
 
                 case 'preco':
                     // 🔹 Compara preço de forma exata
                     $query->where('preco', $search);
+                    break;
+
+                case 'quantidade':
+                    // 🔹 Busca por quantidade exata
+                    $query->where('quantidade', (int) $search);
                     break;
 
                 case 'descricao':
