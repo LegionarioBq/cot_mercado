@@ -13,6 +13,7 @@ O objetivo principal foi atender a um **teste técnico** com foco em:
 
 ## 🚀 Estrutura do Projeto
 
+```
 APP_PRODUTOS/
 ├── .github/workflows/ci-cd.yml # Pipeline CI/CD
 ├── backend/ # API em Laravel
@@ -35,7 +36,7 @@ APP_PRODUTOS/
 ├── docker-compose.yml # Orquestração (Laravel + MySQL + Frontend)
 └── README.md # Este documento
 
-
+```
 ---
 
 ## 🔑 Funcionalidades Implementadas
