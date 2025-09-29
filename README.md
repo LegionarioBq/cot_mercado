@@ -1,222 +1,191 @@
- Desenvolver uma aplicação web para o gerenciamento de "Produtos" utilizando Laravel e Docker, com foco em boas práticas, arquitetura limpa e qualidade de…
+# 📦 APP_PRODUTOS – Sistema de Gestão de Produtos (Laravel + TypeScript + Docker)
 
- ```
- APP_PRODUTOS/
- ├── .github/workflows/ci-cd.yml
- ├── backend/
- │    └── .env
- ├── frontend/
- │    └── .env
- ├── .gitignore
- ├── Dockerfile.backend
- ├── Dockerfile.frontend
- └── README.md
+Este projeto implementa um **sistema completo de gerenciamento de produtos**, desenvolvido em **Laravel (backend)** e **TypeScript (frontend)**, utilizando **Docker** para orquestração de ambiente.  
 
- 
- ```
+O objetivo principal foi atender a um **teste técnico** com foco em:  
+- Boas práticas de código.  
+- Arquitetura limpa (Controller → Service → Request).  
+- Validações robustas no frontend e backend.  
+- Autenticação e autorização segura (Laravel Sanctum + Gates).  
+- Upload de imagens com hash, restrições de formato e tamanho.  
 
+---
 
- 🔎 Analisando a estrutura:
+## 🚀 Estrutura do Projeto
 
-backend/ → Onde ficará o Laravel (API REST, autenticação, migrations).
-
-frontend/ → Onde ficará o app em TypeScript (pode ser React, Angular ou Vue com TS).
-
-Dockerfile.backend → Container do Laravel.
-
-Dockerfile.frontend → Container do frontend.
-
-.github/workflows/ci-cd.yml → Pipeline CI/CD (build + testes + deploy).
-
-README.md → Documentação inicial.
-
-.gitignore → Para ignorar vendor/, node_modules/, arquivos temporários etc.
-
-
-
-```
-frontend/
- ├── src/
- │    ├── index.html
- │    ├── index.ts
- │    ├── api.ts
- │    ├── style.css
- ├── tsconfig.json
- ├── vite.config.js
- ├── package.json
+APP_PRODUTOS/
+├── .github/workflows/ci-cd.yml # Pipeline CI/CD
+├── backend/ # API em Laravel
+│ ├── app/Http/Controllers # Controllers (Produto, Auth)
+│ ├── app/Http/Requests # Validações (Store/Update)
+│ ├── app/Models # Models (Produto, ProdutoImage, User)
+│ ├── app/Services # Services (ProdutoService)
+│ ├── database/migrations # Migrations do banco
+│ └── .env # Configurações (APP_URL, DB, etc.)
+├── frontend/ # Frontend em TypeScript (Vite + TS)
+│ ├── src/
+│ │ ├── api.ts # Configuração do Axios + Token
+│ │ ├── produtos.ts # CRUD com modal, listagem, busca
+│ │ ├── login.ts # Tela e fluxo de autenticação
+│ │ ├── style.css # Estilos básicos
+│ │ └── index.html / index.ts # Entrada da aplicação
+│ └── .env
+├── Dockerfile.backend # Build do container Laravel
+├── Dockerfile.frontend # Build do container frontend
+├── docker-compose.yml # Orquestração (Laravel + MySQL + Frontend)
+└── README.md # Este documento
 
 
+---
 
-```
+## 🔑 Funcionalidades Implementadas
 
-Rodar a migratio e seed juntos
+### ✅ CRUD de Produtos
+- Listagem paginada com busca e filtro (ID, nome, preço, quantidade, descrição).  
+- Criar, editar e excluir produtos.  
+- Validações robustas (preço não pode ser negativo, quantidade não pode ser negativa).  
+- Upload de imagem por produto:
+  - Hash único gerado no backend.
+  - Restrição de 10MB.
+  - Apenas formatos **JPEG, PNG, WEBP**.
+  - Armazenamento em `storage/app/public/img/`.
+  - Exibição via `/img/{hash.ext}` (Laravel `storage:link`).  
 
-```
+### 🔐 Autenticação e Autorização
+- Login com email/senha via **Laravel Sanctum**.  
+- Token salvo no `localStorage` (frontend).  
+- Todas as rotas de produtos protegidas.  
+- Permissões via **Gates**:
+  - `manage-produtos`: apenas **admin/editor** podem criar/editar.  
+  - `delete-produtos`: apenas **admin** pode excluir.  
+- Logs detalhados de todas as operações (quem criou, atualizou, tentou excluir sem permissão).  
+
+### ⚙️ Arquitetura Limpa
+- **Controller**: apenas orquestra requests/responses.  
+- **Service**: concentra regra de negócio (CRUD + upload).  
+- **Request**: validação centralizada (`ProdutoStoreRequest` / `ProdutoUpdateRequest`).  
+- **Model**: `Produto` (com relação `hasMany` para `ProdutoImage`).  
+
+### 🖼️ Imagens
+- Relacionamento **1 Produto → N Imagens**.  
+- Evita duplicação com hash (`sha1_file`).  
+- Se tentar enviar a mesma imagem, retorna:  
+
+
+2. Suba os containers
+
+docker-compose up -d
+
+3. Configure o backend
+
+cd backend
+cp .env.example .env
+php artisan key:generate
 php artisan migrate --seed
+php artisan storage:link
 
-```
+4. Configure o frontend
 
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
 
+5. Acesse no navegador
 
-📌 Benefícios dessa separação
+API Laravel → http://127.0.0.1:8000/api
 
-Controller → apenas orquestra requisições e respostas.
+Frontend TypeScript → http://127.0.0.1:5173
 
-Service → concentra toda a regra de negócio (CRUD).
+🧪 Testes Automatizados
+Criar banco de testes
 
-Requests → isolam a validação.
-
-Código fica mais limpo, reutilizável e testável.
-
-
-
-
-
-📖 Comandos para Gerenciar o Banco de Dados de Teste
-
-Este projeto possui comandos Artisan personalizados para facilitar a criação, reset e migração do banco de dados de testes (mercprodutos_test).
-
-🔹 1. Criar o banco de teste
-
-```
 php artisan db:create mercprodutos_test
 
 
-```
-Cria o banco de dados mercprodutos_test no MySQL (caso não exista).
+Resetar banco de testes
 
-Útil ao configurar o projeto pela primeira vez em um servidor ou ambiente local.
-
-
-🔹 2. Resetar o banco de teste
-
-```
 php artisan db:reset-test
 
-```
-Dropa (remove) o banco de dados mercprodutos_test.
+Rodar migrations no banco de teste
 
-Recria o banco de dados.
-
-Executa todas as migrations no ambiente de teste (.env.testing).
-
-Garante que o banco de teste esteja sempre limpo e sincronizado com as migrations atuais.
-
-
-🔹 3. Rodar migrations manualmente no ambiente de teste
-
-```
 php artisan migrate --env=testing
 
-```
+Executar testes
 
-Executa as migrations no banco mercprodutos_test.
-
-Usado normalmente quando você já criou o banco e quer apenas aplicar novas migrations.
-
-⚠️ Observações importantes
-
-O banco de desenvolvimento e de teste são separados:
-
-mercprodutos → uso normal da aplicação.
-
-mercprodutos_test → usado apenas nos testes (php artisan test).
-
-O arquivo .env configura o banco principal.
-
-O arquivo .env.testing configura o banco de testes.
+php artisan test
 
 
+Separação clara de bancos:
 
-🔑 Fluxo de Autenticação e Autorização (Laravel + Sanctum)
-1. Login (/api/login)
+mercprodutos → produção/desenvolvimento.
 
-Rota pública (POST /login)
+mercprodutos_test → ambiente de testes.
 
-Recebe email e password.
+📜 Fluxo Completo de Autenticação
 
-Usa Auth::attempt para validar credenciais.
+Usuário acessa tela de login (frontend).
 
-Se correto:
+Envia email + password para /api/login.
 
-Gera um token Sanctum ($user->createToken('auth_token')).
+Backend valida e gera Sanctum Token.
 
-Retorna JSON com user + token.
+Frontend salva token no localStorage.
 
-👉 Esse token precisa ser enviado pelo frontend em todas as requisições protegidas:
+Todas as requisições API enviam Authorization: Bearer {token}.
 
-Authorization: Bearer {token}
+Sanctum valida → se ok → Controller executa.
 
-2. Proteção das rotas (routes/api.php)
+Gates verificam permissões antes de ações críticas.
 
-As rotas de produtos e logout estão dentro do grupo Route::middleware('auth:sanctum').
+🖥️ Demonstração do Frontend
 
-Isso significa que só quem tiver um token válido consegue acessar.
+Listagem com paginação.
 
-Exemplo:
+Busca com filtro dinâmico.
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/produtos', [ProdutoController::class, 'store']); // admin/editor
-});
+Modal para criar/editar produtos com upload de imagem.
 
-3. Controle de permissões (AuthServiceProvider)
+Modal de visualização com preview da imagem e descrição.
 
-Onde definimos quem pode criar, editar ou excluir.
+✨ Diferenciais Implementados
 
-Gate::define('manage-produtos', function (User $user) {
-    $type = strtolower(trim($user->type));
-    return in_array($type, ['admin', 'editor']);
-});
+Uso de SOLID (separação Controller/Service/Request).
 
-Gate::define('delete-produtos', function (User $user) {
-    $type = strtolower(trim($user->type));
-    return in_array($type, ['admin', 'editor']);
-});
+Upload de imagens com hash único.
 
-4. Uso dos Gates no ProdutoController
+Logs para auditoria.
 
-Antes de criar/editar/excluir, chamamos Gate::allows.
+Frontend TypeScript com integração direta via Axios.
 
-Exemplo:
+Paginação e busca em tempo real.
 
-if (! Gate::allows('manage-produtos')) {
-    return response()->json([
-        'message' => '❌ Apenas administradores e editores podem criar produtos.'
-    ], Response::HTTP_FORBIDDEN);
-}
+Pipeline CI/CD pronto (.github/workflows/ci-cd.yml).
 
-5. Logs para debug
+📖 Requisitos Originais do Teste Técnico
 
-Em cada operação crítica (store, update, destroy), registramos:
+Este projeto foi desenvolvido seguindo integralmente os requisitos funcionais, diferenciais e extras do teste técnico, incluindo:
 
-Log::info('👤 Tentando criar produto', [
-    'id' => $user->id,
-    'email' => $user->email,
-    'type' => $user->type,
-]);
+Docker
 
+CRUD + Autenticação
 
-Assim fica fácil identificar quem tentou acessar e se tinha permissão.
+API RESTful protegida
 
-📊 Resumindo o fluxo
+Validações (frontend + backend)
 
-Login → gera token Sanctum.
+Upload de imagens
 
-Frontend guarda token no localStorage e envia em cada requisição.
+Arquitetura limpa + SOLID
 
-Middleware Sanctum → valida se token é válido.
+Testes automatizados
 
-Gate (AuthServiceProvider) → valida se o tipo de usuário tem permissão.
+Controle de permissões
 
-Controller → executa ação ou retorna 403 Unauthorized.
+✅ Conclusão
 
-👉 Esse padrão já está pronto para crescer. Você pode:
+O sistema APP_PRODUTOS é uma aplicação web robusta, escalável e bem estruturada, que combina as melhores práticas de Laravel, TypeScript e Docker.
 
-Criar mais Gates para diferentes permissões.
-
-Criar Policies específicas por modelo.
-
-Adicionar expiração de tokens.
+Ele está pronto para ser expandido com novas funcionalidades (ex: filtros avançados, relatórios, integração com APIs externas) mantendo a arquitetura limpa e testável.
 
 
