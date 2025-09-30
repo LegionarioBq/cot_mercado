@@ -96,7 +96,7 @@ npm run dev
 
 API Laravel → http://127.0.0.1:8000/api
 
-Frontend TypeScript → http://127.0.0.1:5173
+Frontend TypeScript → http://127.0.0.1:3000
 
 🧪 Testes Automatizados
 Criar banco de testes

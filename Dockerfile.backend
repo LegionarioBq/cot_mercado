@@ -3,7 +3,7 @@ FROM composer:2.6 AS vendor
 
 WORKDIR /app
 COPY backend/composer.json backend/composer.lock ./
-RUN composer install --no-dev --no-scripts --no-progress --no-interaction
+RUN composer install --no-dev --no-scripts --no-progress --no-interaction --prefer-dist
 
 # Etapa 2 - PHP com extensões necessárias
 FROM php:8.2-fpm
@@ -11,7 +11,12 @@ FROM php:8.2-fpm
 # Instalar dependências do sistema e extensões PHP
 RUN apt-get update && apt-get install -y \
     zip unzip git curl libpng-dev libonig-dev libxml2-dev netcat \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Timezone (logs Laravel)
+ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Configurar diretório de trabalho
 WORKDIR /var/www/html
@@ -21,6 +26,10 @@ COPY backend/ ./
 
 # Copiar dependências do Composer da etapa anterior
 COPY --from=vendor /app/vendor ./vendor
+
+# Ajustar permissões
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # Copiar entrypoint customizado
 COPY ./backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh

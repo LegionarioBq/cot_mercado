@@ -1,25 +1,24 @@
-# Etapa 1 - Build do frontend (TypeScript → JavaScript)
-FROM node:20 AS build
+ServerName localhost
 
-WORKDIR /app
+ServerRoot "/usr/local/apache2"
+DocumentRoot "/usr/local/apache2/htdocs"
+Listen 3000
 
-COPY frontend/package*.json ./
-RUN npm install --silent
+LoadModule rewrite_module modules/mod_rewrite.so
 
-COPY frontend/ ./
-RUN npm run build
+<Directory "/usr/local/apache2/htdocs">
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    Require all granted
 
-# Etapa 2 - Servidor estático
-FROM node:20-alpine
+    RewriteEngine On
+    # SPA fallback: redireciona tudo para index.html
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
+</Directory>
 
-WORKDIR /app
-
-# Copiar apenas os arquivos necessários do build
-COPY --from=build /app/dist ./dist
-COPY frontend/index.html ./
-
-# Instalar servidor estático
-RUN npm install -g serve
-
-EXPOSE 3000
-CMD ["serve", ".", "-l", "3000"]
+# Proxy para o backend Laravel
+ProxyRequests Off
+ProxyPass /api http://backend:8000/api
+ProxyPassReverse /api http://backend:8000/api
