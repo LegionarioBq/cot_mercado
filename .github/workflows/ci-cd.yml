@@ -58,12 +58,12 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 \
+          -p ${{ secrets.SERVER_PORT_SSH_2 }} \
           ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
-
             echo "===== Removendo containers antigos ====="
             for c in app_backend app_frontend; do
-              if sudo docker ps -a --format '{{.Names}}' | grep -Eq "^$c\$"; then
+              if sudo docker ps -a --format '{{.Names}}' | grep -Eq "^$c$"; then
                 echo "Removendo container $c..."
                 sudo docker rm -f $c
               fi
