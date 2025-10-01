@@ -46,13 +46,13 @@ jobs:
           port: ${{ secrets.SERVER_PORT_SSH_2 }}
           script: |
             # Clonar o repositório caso não exista, senão dar git pull
-            if [ ! -d "~/APP_PRODUTOS/.git" ]; then
-              git clone -b main git@github.com:${{ github.repository }} ~/APP_PRODUTOS
+            if [ ! -d "$HOME/APP_PRODUTOS/.git" ]; then
+              GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone -b main git@github.com:${{ github.repository }} $HOME/APP_PRODUTOS
             else
-              cd ~/APP_PRODUTOS && git pull origin main
+              cd $HOME/APP_PRODUTOS && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull origin main
             fi
 
-            cd ~/APP_PRODUTOS
+            cd $HOME/APP_PRODUTOS
 
             # Exportar variáveis de ambiente para o docker compose
             export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
@@ -74,6 +74,13 @@ jobs:
 
             export VITE_API_URL=${{ secrets.VITE_API_URL }}
 
-            docker compose down
-            docker compose pull
-            docker compose up -d --build
+            # Garantir que docker compose funcione (v2 ou v1)
+            if command -v docker compose >/dev/null 2>&1; then
+              docker compose down
+              docker compose pull
+              docker compose up -d --build
+            else
+              docker-compose down
+              docker-compose pull
+              docker-compose up -d --build
+            fi
