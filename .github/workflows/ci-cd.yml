@@ -58,7 +58,9 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
+          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 \
+            -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+            ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
 
             # Parar e remover containers antigos se existirem
             for c in app_backend app_frontend; do
