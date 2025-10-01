@@ -1,44 +1,12 @@
 version: "3.9"
 
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: app_mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    networks:
-      - app_network
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: app_phpmyadmin
-    restart: always
-    environment:
-      PMA_HOST: mysql
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    ports:
-      - "8080:80"
-    depends_on:
-      - mysql
-    networks:
-      - app_network
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: app_backend
+    container_name: app_produtos_back
     restart: always
-    depends_on:
-      - mysql
     environment:
       APP_ENV: ${APP_ENV}
       APP_KEY: ${APP_KEY}
@@ -61,19 +29,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: app_frontend
+    container_name: app_frontend_front
     restart: always
     depends_on:
       - backend
     environment:
       VITE_API_URL: ${VITE_API_URL}
     ports:
-      - "3000:80"
+      - "3009:80"
     networks:
       - app_network
-
-volumes:
-  mysql_data:
 
 networks:
   app_network:
