@@ -1,24 +1,29 @@
-ServerName localhost
+# Etapa 1 - Build do frontend
+FROM node:20 AS build
 
-ServerRoot "/usr/local/apache2"
-DocumentRoot "/usr/local/apache2/htdocs"
-Listen 3000
+WORKDIR /app
 
-LoadModule rewrite_module modules/mod_rewrite.so
+COPY frontend/package*.json ./
+RUN npm ci --silent
 
-<Directory "/usr/local/apache2/htdocs">
-    Options Indexes FollowSymLinks
-    AllowOverride None
-    Require all granted
+COPY frontend/ ./
+RUN npm run build
 
-    RewriteEngine On
-    # SPA fallback: redireciona tudo para index.html
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule . /index.html [L]
-</Directory>
+# Etapa 2 - Servir com Apache
+FROM httpd:2.4-alpine
 
-# Proxy para o backend Laravel
-ProxyRequests Off
-ProxyPass /api http://backend:8000/api
-ProxyPassReverse /api http://backend:8000/api
+# Habilitar mod_rewrite para SPA
+RUN sed -i '/LoadModule rewrite_module/s/^#//g' /usr/local/apache2/conf/httpd.conf
+
+# Remover arquivos default
+RUN rm -rf /usr/local/apache2/htdocs/*
+
+# Copiar build do frontend para o diretório do Apache
+COPY --from=build /app/dist/ /usr/local/apache2/htdocs/
+
+# Copiar configuração customizada do Apache
+COPY docker/httpd.conf /usr/local/apache2/conf/httpd.conf
+
+EXPOSE 80
+
+CMD ["httpd-foreground"]
