@@ -45,42 +45,46 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY_2 }}
           port: ${{ secrets.SERVER_PORT_SSH_2 }}
           script: |
-            # Clonar o repositório caso não exista, senão dar git pull
-            if [ ! -d "$HOME/APP_PRODUTOS/.git" ]; then
-              GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone -b main git@github.com:${{ github.repository }} $HOME/APP_PRODUTOS
-            else
-              cd $HOME/APP_PRODUTOS && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull origin main
-            fi
+            # Garantir que usuário tenha permissão de usar docker
+            sudo usermod -aG docker $USER
+            newgrp docker <<EONG
+              # Clonar o repositório caso não exista, senão dar git pull
+              if [ ! -d "$HOME/APP_PRODUTOS/.git" ]; then
+                GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone -b main git@github.com:${{ github.repository }} $HOME/APP_PRODUTOS
+              else
+                cd $HOME/APP_PRODUTOS && GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git pull origin main
+              fi
 
-            cd $HOME/APP_PRODUTOS
+              cd $HOME/APP_PRODUTOS
 
-            # Exportar variáveis de ambiente para o docker compose
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            export MYSQL_USER=${{ secrets.MYSQL_USER }}
-            export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+              # Exportar variáveis de ambiente para o docker compose
+              export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+              export MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+              export MYSQL_USER=${{ secrets.MYSQL_USER }}
+              export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
 
-            export APP_ENV=${{ secrets.APP_ENV }}
-            export APP_KEY=${{ secrets.APP_KEY }}
-            export APP_DEBUG=${{ secrets.APP_DEBUG }}
-            export APP_URL=${{ secrets.APP_URL }}
+              export APP_ENV=${{ secrets.APP_ENV }}
+              export APP_KEY=${{ secrets.APP_KEY }}
+              export APP_DEBUG=${{ secrets.APP_DEBUG }}
+              export APP_URL=${{ secrets.APP_URL }}
 
-            export DB_CONNECTION=${{ secrets.DB_CONNECTION }}
-            export DB_HOST=${{ secrets.DB_HOST }}
-            export DB_PORT=${{ secrets.DB_PORT }}
-            export DB_DATABASE=${{ secrets.DB_DATABASE }}
-            export DB_USERNAME=${{ secrets.DB_USERNAME }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+              export DB_CONNECTION=${{ secrets.DB_CONNECTION }}
+              export DB_HOST=${{ secrets.DB_HOST }}
+              export DB_PORT=${{ secrets.DB_PORT }}
+              export DB_DATABASE=${{ secrets.DB_DATABASE }}
+              export DB_USERNAME=${{ secrets.DB_USERNAME }}
+              export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
-            export VITE_API_URL=${{ secrets.VITE_API_URL }}
+              export VITE_API_URL=${{ secrets.VITE_API_URL }}
 
-            # Garantir que docker compose funcione (v2 ou v1)
-            if command -v docker compose >/dev/null 2>&1; then
-              docker compose down
-              docker compose pull
-              docker compose up -d --build
-            else
-              docker-compose down
-              docker-compose pull
-              docker-compose up -d --build
-            fi
+              # Garantir que docker compose funcione (v2 ou v1)
+              if command -v docker compose >/dev/null 2>&1; then
+                docker compose down
+                docker compose pull
+                docker compose up -d --build
+              else
+                docker-compose down
+                docker-compose pull
+                docker-compose up -d --build
+              fi
+            EONG
