@@ -59,15 +59,15 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} \
-          ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
+          ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
 
             # Parar e remover containers antigos se existirem
             for c in app_backend app_frontend; do
-              container_id=$(sudo docker ps -aq --filter "name=^/$c$")
-              if [ -n "$container_id" ]; then
-                echo "Parando container $c..."
-                sudo docker stop $container_id
-                sudo docker rm $container_id
+              container_id=\$(sudo docker ps -aq --filter "name=^/\$c\$")
+              if [ -n "\$container_id" ]; then
+                echo "Parando container \$c..."
+                sudo docker stop \$container_id
+                sudo docker rm \$container_id
               fi
             done
 
