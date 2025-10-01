@@ -59,28 +59,26 @@ jobs:
       - name: Deploy to Server
         run: |
           ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} \
-          ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
+          ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
 
-            # Parar e remover containers antigos se existirem
+            echo "===== Removendo containers antigos ====="
             for c in app_backend app_frontend; do
-              container_id=\$(sudo docker ps -aq --filter "name=^/\$c\$")
-              if [ -n "\$container_id" ]; then
-                echo "Parando container \$c..."
-                sudo docker stop \$container_id
-                sudo docker rm \$container_id
+              if sudo docker ps -a --format '{{.Names}}' | grep -Eq "^$c\$"; then
+                echo "Removendo container $c..."
+                sudo docker rm -f $c
               fi
             done
 
-            # Criar rede se não existir
+            echo "===== Garantindo rede Docker ====="
             if ! sudo docker network ls | grep -q app_network; then
               sudo docker network create --driver bridge app_network
             fi
 
-            # Pull das imagens novas
+            echo "===== Atualizando imagens ====="
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_backend:latest
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_frontend:latest
 
-            # Subir Backend
+            echo "===== Subindo Backend ====="
             sudo docker run -d --name app_backend --restart=always --network app_network \
               -e TZ=America/Sao_Paulo \
               -e APP_ENV=${{ secrets.APP_ENV }} \
@@ -95,10 +93,10 @@ jobs:
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
               -p 8000:8000 ghcr.io/${{ env.REPO_OWNER }}/app_produtos_backend:latest
 
-            # Esperar backend subir
+            echo "Aguardando backend subir..."
             sleep 10
 
-            # Subir Frontend
+            echo "===== Subindo Frontend ====="
             sudo docker run -d --name app_frontend --restart=always --network app_network \
               -e TZ=America/Sao_Paulo \
               -e VITE_API_URL=${{ secrets.VITE_API_URL }} \
