@@ -10,60 +10,87 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set lowercase repo owner
-        id: repo_owner
-        run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Log in to GitHub Container Registry
         run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
 
-      # Backend
-      - name: Build Backend
+      - name: Set lowercase repository owner
+        id: repo_owner
+        run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      # Build e Push da imagem do backend
+      - name: Build Backend Docker image
         run: |
-          docker build -f Dockerfile.backend -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} .
+          docker build -f Dockerfile.backend \
+            -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} .
+
+      - name: Push Backend Docker image
+        run: |
           docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
 
-      # Frontend
-      - name: Build Frontend
+      # Build e Push da imagem do frontend
+      - name: Build Frontend Docker image
         run: |
-          docker build -f Dockerfile.frontend -t ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:${{ github.sha }} .
-          docker tag ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:latest
-          docker push ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:${{ github.sha }}
-          docker push ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:latest
+          docker build -f Dockerfile.frontend \
+            -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} .
 
-      # Deploy via SSH
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Push Frontend Docker image
+        run: |
+          docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+          docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }}
+          docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
         with:
-          host: ${{ secrets.SERVER_HOST_2 }}
-          username: ${{ secrets.SERVER_USER_2 }}
-          key: ${{ secrets.SERVER_SSH_KEY_2 }}
-          port: ${{ secrets.SERVER_PORT_SSH_2 }}
-          script: |
-            echo "===== Removendo containers antigos ====="
-            for c in app_backend app_frontend; do
-              if sudo docker ps -a --format '{{.Names}}' | grep -Eq "^$c$"; then
-                echo "Removendo container $c..."
-                sudo docker rm -f $c
-              fi
-            done
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY_2 }}
 
-            echo "===== Garantindo rede Docker ====="
-            if ! sudo docker network ls | grep -q app_network; then
-              sudo docker network create --driver bridge app_network
+      - name: Deploy to Server
+        run: |
+          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << 'EOF'
+
+            # Verificar e liberar a porta 8000 para o backend
+            if sudo lsof -i :8000; then
+              sudo fuser -k 8000/tcp
+              echo "Porta 8000 foi liberada."
             fi
 
-            echo "===== Pull das imagens ====="
-            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
-            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:latest
+            # Verificar e liberar a porta 3009 para o frontend
+            if sudo lsof -i :3009; then
+              sudo fuser -k 3009/tcp
+              echo "Porta 3009 foi liberada."
+            fi
 
-            echo "===== Subindo Backend ====="
-            sudo docker run -d --name app_backend --restart=always --network app_network \
+            # Aguardar 5 segundos para garantir que as portas foram liberadas
+            sleep 5
+
+            # Parar e remover contêineres existentes
+            if sudo docker ps -q --filter "name=app_produtos_back"; then
+              sudo docker stop app_produtos_back
+              sudo docker rm app_produtos_back
+              echo "Contêiner backend anterior parado e removido."
+            fi
+
+            if sudo docker ps -q --filter "name=app_produtos_front"; then
+              sudo docker stop app_produtos_front
+              sudo docker rm app_produtos_front
+              echo "Contêiner frontend anterior parado e removido."
+            fi
+
+            # Fazer pull das novas imagens
+            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
+            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+
+            # Iniciar o backend
+            sudo docker run -d \
+              --name app_produtos_back \
+              --restart=always \
+              --network bridge \
               -e TZ=America/Sao_Paulo \
               -e APP_ENV=${{ secrets.APP_ENV }} \
               -e APP_KEY=${{ secrets.APP_KEY }} \
@@ -75,13 +102,19 @@ jobs:
               -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -p 8000:8000 ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
+              -p 8000:8000 \
+              ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
 
-            echo "Aguardando backend subir..."
-            sleep 10
+            # Aguardar backend subir
+            sleep 15
 
-            echo "===== Subindo Frontend ====="
-            sudo docker run -d --name app_frontend --restart=always --network app_network \
+            # Iniciar o frontend
+            sudo docker run -d \
+              --name app_produtos_front \
+              --restart=always \
+              --link app_produtos_back:app_produtos_back \
               -e TZ=America/Sao_Paulo \
-              -e VITE_API_URL=${{ secrets.VITE_API_URL }} \
-              -p 3009:80 ghcr.io/${{ env.REPO_OWNER }}/app_frontend_front:latest
+              -e VITE_API_URL=http://app_produtos_back:8000/api \
+              -p 3009:80 \
+              ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+          EOF
