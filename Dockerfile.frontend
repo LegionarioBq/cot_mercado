@@ -12,18 +12,11 @@ RUN npm run build
 # Etapa 2 - Servir com Apache
 FROM httpd:2.4-alpine
 
-# Habilitar mod_rewrite para SPA
-RUN sed -i '/LoadModule rewrite_module/s/^#//g' /usr/local/apache2/conf/httpd.conf
-
 # Remover arquivos default
 RUN rm -rf /usr/local/apache2/htdocs/*
 
 # Copiar build do frontend para o diretório do Apache
 COPY --from=build /app/dist/ /usr/local/apache2/htdocs/
 
-# Copiar configuração customizada do Apache
-COPY docker/httpd.conf /usr/local/apache2/conf/httpd.conf
-
 EXPOSE 80
-
 CMD ["httpd-foreground"]
