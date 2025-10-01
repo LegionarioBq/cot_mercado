@@ -58,10 +58,12 @@ jobs:
 
       - name: Deploy to Server
         run: |
-          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
+          ssh -t -o StrictHostKeyChecking=no -o ConnectTimeout=60 \
+            -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+            ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
             # Parar e remover containers antigos se existirem
-            for c in app_mysql app_backend app_frontend; do
-              container_id=\$(sudo docker ps -aq --filter "name=^/\$c\$") 
+            for c in app_backend app_frontend; do
+              container_id=\$(sudo docker ps -aq --filter "name=^/\$c\$")
               if [ -n "\$container_id" ]; then
                 echo "Parando container \$c..."
                 sudo docker stop \$container_id
@@ -69,28 +71,25 @@ jobs:
               fi
             done
 
+            # Criar rede se não existir
+            if ! sudo docker network ls | grep -q app_network; then
+              sudo docker network create --driver bridge app_network
+            fi
+
             # Pull das imagens novas
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_backend:latest
             sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_frontend:latest
 
-            # Subir MySQL
-            sudo docker run -d --name app_mysql --restart=always --network bridge \
-              -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
-              -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
-              -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
-              -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -p 3310:3306 mysql:8.0
-
             # Subir Backend
-            sudo docker run -d --name app_backend --restart=always --network bridge \
+            sudo docker run -d --name app_backend --restart=always --network app_network \
               -e TZ=America/Sao_Paulo \
               -e APP_ENV=${{ secrets.APP_ENV }} \
               -e APP_KEY=${{ secrets.APP_KEY }} \
               -e APP_DEBUG=${{ secrets.APP_DEBUG }} \
               -e APP_URL=${{ secrets.APP_URL }} \
               -e DB_CONNECTION=mysql \
-              -e DB_HOST=app_mysql \
-              -e DB_PORT=3306 \
+              -e DB_HOST=${{ secrets.DB_HOST }} \
+              -e DB_PORT=${{ secrets.DB_PORT }} \
               -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
               -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
               -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -100,8 +99,8 @@ jobs:
             sleep 10
 
             # Subir Frontend
-            sudo docker run -d --name app_frontend --restart=always --network bridge \
+            sudo docker run -d --name app_frontend --restart=always --network app_network \
               -e TZ=America/Sao_Paulo \
-              -e VITE_API_URL=http://app_backend:8000/api \
+              -e VITE_API_URL=${{ secrets.VITE_API_URL }} \
               -p 3009:80 ghcr.io/${{ env.REPO_OWNER }}/app_produtos_frontend:latest
           EOF
