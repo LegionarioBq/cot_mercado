@@ -85,14 +85,13 @@ jobs:
             --name=app_produtos_mysql \
             --restart=always \
             -e TZ=America/Sao_Paulo \
-            -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
-            -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
-            -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -v app_produtos_mysql_data:/var/lib/mysql \
             -p 3310:3306 \
             mysql:8.0 || echo "Erro ao iniciar app_produtos_mysql."
           EOF
+
 
       - name: Wait 7 seconds after MySQL start
         run: |
