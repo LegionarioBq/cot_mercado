@@ -1,3 +1,24 @@
+Skip to content
+Navigation Menu
+LegionarioBq
+cot_mercado
+
+Type / to search
+Code
+Issues
+Pull requests
+Actions
+Projects
+Wiki
+Security
+Insights
+Settings
+CI/CD Pipeline_APP_PRODUTOS
+feat: add container de mysql 02 #46
+Jobs
+Run details
+Workflow file for this run
+.github/workflows/ci-cd.yml at b50e009
 name: CI/CD Pipeline_APP_PRODUTOS
 
 on:
@@ -26,25 +47,21 @@ jobs:
         run: |
           docker build -f Dockerfile.backend \
             -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} .
-
       - name: Push Backend Docker image
         run: |
           docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
-
       # ===== Build e Push Frontend =====
       - name: Build Frontend Docker image
         run: |
           docker build -f Dockerfile.frontend \
             -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} .
-
       - name: Push Frontend Docker image
         run: |
           docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
-
       # ===== SSH =====
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -60,26 +77,18 @@ jobs:
             echo "Error: SSH port ${{ secrets.SERVER_PORT_SSH_2 }} is not reachable. Aborting deployment."
             exit 1
           fi
-
       # ============= MYSQL FIRST =============
-      - name: Remove existing MySQL container and volume if it exists
+      - name: Remove existing MySQL container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
-          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_mysql; then 
               echo 'Removing existing MySQL container'; 
               sudo docker stop app_produtos_mysql || true; 
               sudo docker rm app_produtos_mysql || true; 
-           fi && \
-           if sudo docker volume ls -q -f name=app_produtos_mysql_data; then 
-              echo 'Removing existing MySQL volume (⚠️ all data will be lost)'; 
-              sudo docker volume rm app_produtos_mysql_data || true; 
            fi"
-
       - name: Start MySQL container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
-          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           # Iniciar MySQL para APP_PRODUTOS
           sudo docker run -d \
             --name=app_produtos_mysql \
@@ -91,12 +100,9 @@ jobs:
             -p 3310:3306 \
             mysql:8.0 || echo "Erro ao iniciar app_produtos_mysql."
           EOF
-
-
       - name: Wait 7 seconds after MySQL start
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
-
       # ============= BACKEND SECOND =============
       - name: Remove existing backend container if it exists
         run: |
@@ -106,12 +112,10 @@ jobs:
               sudo docker stop app_produtos_back || true; 
               sudo docker rm app_produtos_back || true; 
            fi"
-
       - name: Pull the latest backend image
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest"
-
       - name: Start backend container
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
@@ -133,11 +137,9 @@ jobs:
             -p 8000:8000 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest || echo "Erro ao iniciar app_produtos_back."
           EOF
-
       - name: Wait 7 seconds after backend start
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
-
       # ============= FRONTEND THIRD =============
       - name: Remove existing frontend container if it exists
         run: |
@@ -147,12 +149,10 @@ jobs:
               sudo docker stop app_produtos_front || true; 
               sudo docker rm app_produtos_front || true; 
            fi"
-
       - name: Pull the latest frontend image
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest"
-
       - name: Start frontend container
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
@@ -165,13 +165,12 @@ jobs:
             -p 3009:80 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest || echo "Erro ao iniciar app_produtos_front."
           EOF
-
       - name: Wait 7 seconds after frontend start
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
-
       # ============= VERIFY =============
       - name: Verify containers are running
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
+feat: add container de mysql 02 · LegionarioBq/cot_mercado@b50e009 
