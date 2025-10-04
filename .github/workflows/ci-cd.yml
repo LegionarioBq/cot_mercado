@@ -60,16 +60,33 @@ jobs:
             exit 1
           fi
 
-      - name: Check and release backend port 8000
+      # ============= MYSQL FIRST =============
+      - name: Remove existing MySQL container if it exists
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "if sudo lsof -i :8000; then sudo fuser -k 8000/tcp && echo 'Port 8000 released.'; else echo 'Port 8000 already free.'; fi"
+          "if sudo docker ps -a -q -f name=app_produtos_mysql; then 
+              echo 'Removing existing MySQL container'; 
+              sudo docker stop app_produtos_mysql || true; 
+              sudo docker rm app_produtos_mysql || true; 
+           fi"
 
-      - name: Check and release frontend port 3009
+      - name: Start MySQL container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "if sudo lsof -i :3009; then sudo fuser -k 3009/tcp && echo 'Port 3009 released.'; else echo 'Port 3009 already free.'; fi"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
+          sudo docker run -d --name app_produtos_mysql --restart=always \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
+            -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
+            -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -p 3310:3306 \
+            mysql:8.0
+          EOF
 
+      - name: Wait 7 seconds after MySQL start
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+
+      # ============= BACKEND SECOND =============
       - name: Remove existing backend container if it exists
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
@@ -79,20 +96,10 @@ jobs:
               sudo docker rm app_produtos_back || true; 
            fi"
 
-      - name: Remove existing frontend container if it exists
+      - name: Pull the latest backend image
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "if sudo docker ps -a -q -f name=app_produtos_front; then 
-              echo 'Removing existing frontend container'; 
-              sudo docker stop app_produtos_front || true; 
-              sudo docker rm app_produtos_front || true; 
-           fi"
-
-      - name: Pull the latest Docker images
-        run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest && \
-           sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest"
+          "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest"
 
       - name: Start backend container
         run: |
@@ -105,8 +112,8 @@ jobs:
             -e APP_DEBUG=${{ secrets.APP_DEBUG }} \
             -e APP_URL=${{ secrets.APP_URL }} \
             -e DB_CONNECTION=mysql \
-            -e DB_HOST=${{ secrets.DB_HOST }} \
-            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_HOST=app_produtos_mysql \
+            -e DB_PORT=3306 \
             -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
             -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
             -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
@@ -114,9 +121,24 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
           EOF
 
-      - name: Wait for backend to start
+      - name: Wait 7 seconds after backend start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 15"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+
+      # ============= FRONTEND THIRD =============
+      - name: Remove existing frontend container if it exists
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          "if sudo docker ps -a -q -f name=app_produtos_front; then 
+              echo 'Removing existing frontend container'; 
+              sudo docker stop app_produtos_front || true; 
+              sudo docker rm app_produtos_front || true; 
+           fi"
+
+      - name: Pull the latest frontend image
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest"
 
       - name: Start frontend container
         run: |
@@ -129,22 +151,12 @@ jobs:
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
           EOF
 
-      - name: Verify backend container is running
+      - name: Wait 7 seconds after frontend start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "if sudo docker ps -q -f name=app_produtos_back; then 
-              echo 'Backend container is running.'; 
-           else 
-              echo 'Error: Backend container is not running.'; 
-              exit 1; 
-           fi"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
 
-      - name: Verify frontend container is running
+      # ============= VERIFY =============
+      - name: Verify containers are running
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
-          "if sudo docker ps -q -f name=app_produtos_front; then 
-              echo 'Frontend container is running.'; 
-           else 
-              echo 'Error: Frontend container is not running.'; 
-              exit 1; 
-           fi"
+          "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
