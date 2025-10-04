@@ -21,7 +21,7 @@ jobs:
         id: repo_owner
         run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      # Build e Push Backend
+      # ===== Build e Push Backend =====
       - name: Build Backend Docker image
         run: |
           docker build -f Dockerfile.backend \
@@ -33,7 +33,7 @@ jobs:
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
 
-      # Build e Push Frontend
+      # ===== Build e Push Frontend =====
       - name: Build Frontend Docker image
         run: |
           docker build -f Dockerfile.frontend \
@@ -74,13 +74,16 @@ jobs:
       - name: Start MySQL container
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          sudo docker run -d --name app_produtos_mysql --restart=always \
-            -e MYSQL_ROOT_PASSWORD=123 \
-            -e MYSQL_DATABASE=mercprodutos \
-            -e MYSQL_USER=root \
-            -e MYSQL_PASSWORD=123 \
+          # Iniciar MySQL para APP_PRODUTOS
+          sudo docker run -d \
+            --name=app_produtos_mysql \
+            --restart=always \
+            -e TZ=America/Sao_Paulo \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
+            -v app_produtos_mysql_data:/var/lib/mysql \
             -p 3310:3306 \
-            mysql:8.0
+            mysql:8.0 || echo "Erro ao iniciar app_produtos_mysql."
           EOF
 
       - name: Wait 7 seconds after MySQL start
@@ -105,20 +108,23 @@ jobs:
       - name: Start backend container
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          sudo docker run -d --name app_produtos_back --restart=always \
+          # Iniciar Backend APP_PRODUTOS
+          sudo docker run -d \
+            --name=app_produtos_back \
+            --restart=always \
             -e TZ=America/Sao_Paulo \
             -e APP_ENV=${{ secrets.APP_ENV }} \
             -e APP_KEY=${{ secrets.APP_KEY }} \
             -e APP_DEBUG=${{ secrets.APP_DEBUG }} \
             -e APP_URL=${{ secrets.APP_URL }} \
-            -e DB_CONNECTION=mysql \
-            -e DB_HOST=127.0.0.1 \
-            -e DB_PORT=3310 \
-            -e DB_DATABASE=mercprodutos \
-            -e DB_USERNAME=teste \
-            -e DB_PASSWORD=123 \
+            -e DB_CONNECTION=${{ secrets.DB_CONNECTION }}  \
+            -e DB_HOST=${{ secrets.DB_HOST }} \
+            -e DB_PORT=${{ secrets.DB_PORT }} \
+            -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
+            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
+            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -p 8000:8000 \
-            ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
+            ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest || echo "Erro ao iniciar app_produtos_back."
           EOF
 
       - name: Wait 7 seconds after backend start
@@ -143,11 +149,14 @@ jobs:
       - name: Start frontend container
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          sudo docker run -d --name app_produtos_front --restart=always \
+          # Iniciar Frontend APP_PRODUTOS
+          sudo docker run -d \
+            --name=app_produtos_front \
+            --restart=always \
             -e TZ=America/Sao_Paulo \
-            -e VITE_API_URL=http://127.0.0.1:8000/api \
+            -e VITE_API_URL=${{ secrets.VITE_API_URL }}  \
             -p 3009:80 \
-            ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+            ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest || echo "Erro ao iniciar app_produtos_front."
           EOF
 
       - name: Wait 7 seconds after frontend start
