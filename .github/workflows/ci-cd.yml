@@ -45,6 +45,7 @@ jobs:
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
 
+      # ===== SSH =====
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
@@ -74,10 +75,10 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           sudo docker run -d --name app_produtos_mysql --restart=always \
-            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
-            -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
-            -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
-            -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_ROOT_PASSWORD=123 \
+            -e MYSQL_DATABASE=mercprodutos \
+            -e MYSQL_USER=root \
+            -e MYSQL_PASSWORD=123 \
             -p 3310:3306 \
             mysql:8.0
           EOF
@@ -105,18 +106,17 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           sudo docker run -d --name app_produtos_back --restart=always \
-            --network bridge \
             -e TZ=America/Sao_Paulo \
             -e APP_ENV=${{ secrets.APP_ENV }} \
             -e APP_KEY=${{ secrets.APP_KEY }} \
             -e APP_DEBUG=${{ secrets.APP_DEBUG }} \
             -e APP_URL=${{ secrets.APP_URL }} \
             -e DB_CONNECTION=mysql \
-            -e DB_HOST=app_produtos_mysql \
-            -e DB_PORT=3306 \
-            -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
-            -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-            -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=3310 \
+            -e DB_DATABASE=mercprodutos \
+            -e DB_USERNAME=root \
+            -e DB_PASSWORD=123 \
             -p 8000:8000 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
           EOF
@@ -144,9 +144,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           sudo docker run -d --name app_produtos_front --restart=always \
-            --link app_produtos_back:app_produtos_back \
             -e TZ=America/Sao_Paulo \
-            -e VITE_API_URL=http://app_produtos_back:8000/api \
+            -e VITE_API_URL=http://127.0.0.1:8000/api \
             -p 3009:80 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
           EOF
