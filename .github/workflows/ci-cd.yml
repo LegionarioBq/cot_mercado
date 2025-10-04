@@ -15,32 +15,36 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to GitHub Container Registry
-        run: echo ${{ secrets.CR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+        run: |
+          echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u "${{ github.repository_owner }}" --password-stdin
 
       - name: Set repository owner to lowercase
-        id: repo_owner
         run: echo "REPO_OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
-      # ===== Build e Push Backend =====
+      # ===== Build & Push Backend =====
       - name: Build Backend Docker image
         run: |
           docker build -f Dockerfile.backend \
             -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} .
+
       - name: Push Backend Docker image
         run: |
           docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
-      # ===== Build e Push Frontend =====
+
+      # ===== Build & Push Frontend =====
       - name: Build Frontend Docker image
         run: |
           docker build -f Dockerfile.frontend \
             -t ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} .
+
       - name: Push Frontend Docker image
         run: |
           docker tag ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }} ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:${{ github.sha }}
           docker push ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest
+
       # ===== SSH =====
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
@@ -56,49 +60,61 @@ jobs:
             echo "Error: SSH port ${{ secrets.SERVER_PORT_SSH_2 }} is not reachable. Aborting deployment."
             exit 1
           fi
+
       # ============= MYSQL FIRST =============
       - name: Remove existing MySQL container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_mysql; then 
               echo 'Removing existing MySQL container'; 
               sudo docker stop app_produtos_mysql || true; 
               sudo docker rm app_produtos_mysql || true; 
            fi"
+
       - name: Start MySQL container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          # Iniciar MySQL para APP_PRODUTOS
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} <<EOF
           sudo docker run -d \
             --name=app_produtos_mysql \
             --restart=always \
             -e TZ=America/Sao_Paulo \
-            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
-            -v app_produtos_mysql_data:/var/lib/mysql \
+            -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
+            -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -p 3310:3306 \
+            -v app_produtos_mysql_data:/var/lib/mysql \
             mysql:8.0 || echo "Erro ao iniciar app_produtos_mysql."
           EOF
-      - name: Wait 7 seconds after MySQL start
+
+      - name: Wait 10 seconds after MySQL start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 10"
+
       # ============= BACKEND SECOND =============
       - name: Remove existing backend container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_back; then 
               echo 'Removing existing backend container'; 
               sudo docker stop app_produtos_back || true; 
               sudo docker rm app_produtos_back || true; 
            fi"
+
       - name: Pull the latest backend image
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest"
+
       - name: Start backend container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          # Iniciar Backend APP_PRODUTOS
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} <<EOF
           sudo docker run -d \
             --name=app_produtos_back \
             --restart=always \
@@ -107,7 +123,7 @@ jobs:
             -e APP_KEY=${{ secrets.APP_KEY }} \
             -e APP_DEBUG=${{ secrets.APP_DEBUG }} \
             -e APP_URL=${{ secrets.APP_URL }} \
-            -e DB_CONNECTION=${{ secrets.DB_CONNECTION }}  \
+            -e DB_CONNECTION=${{ secrets.DB_CONNECTION }} \
             -e DB_HOST=${{ secrets.DB_HOST }} \
             -e DB_PORT=${{ secrets.DB_PORT }} \
             -e DB_DATABASE=${{ secrets.DB_DATABASE }} \
@@ -116,39 +132,50 @@ jobs:
             -p 8000:8000 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest || echo "Erro ao iniciar app_produtos_back."
           EOF
+
       - name: Wait 7 seconds after backend start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+
       # ============= FRONTEND THIRD =============
       - name: Remove existing frontend container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_front; then 
               echo 'Removing existing frontend container'; 
               sudo docker stop app_produtos_front || true; 
               sudo docker rm app_produtos_front || true; 
            fi"
+
       - name: Pull the latest frontend image
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest"
+
       - name: Start frontend container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
-          # Iniciar Frontend APP_PRODUTOS
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} <<EOF
           sudo docker run -d \
             --name=app_produtos_front \
             --restart=always \
             -e TZ=America/Sao_Paulo \
-            -e VITE_API_URL=${{ secrets.VITE_API_URL }}  \
+            -e VITE_API_URL=${{ secrets.VITE_API_URL }} \
             -p 3009:80 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest || echo "Erro ao iniciar app_produtos_front."
           EOF
+
       - name: Wait 7 seconds after frontend start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 7"
+
       # ============= VERIFY =============
       - name: Verify containers are running
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
