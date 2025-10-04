@@ -62,25 +62,33 @@ jobs:
           fi
 
       # ============= MYSQL FIRST =============
-      - name: Remove existing MySQL container if it exists
+      - name: Remove existing MySQL container and volume if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_mysql; then 
               echo 'Removing existing MySQL container'; 
               sudo docker stop app_produtos_mysql || true; 
               sudo docker rm app_produtos_mysql || true; 
+           fi && \
+           if sudo docker volume ls -q -f name=app_produtos_mysql_data; then 
+              echo 'Removing existing MySQL volume (⚠️ all data will be lost)'; 
+              sudo docker volume rm app_produtos_mysql_data || true; 
            fi"
 
       - name: Start MySQL container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} \
+          ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           # Iniciar MySQL para APP_PRODUTOS
           sudo docker run -d \
             --name=app_produtos_mysql \
             --restart=always \
             -e TZ=America/Sao_Paulo \
-            -e MYSQL_ROOT_PASSWORD=${{ secrets.DB_PASSWORD }} \
+            -e MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }} \
             -e MYSQL_DATABASE=${{ secrets.DB_DATABASE }} \
+            -e MYSQL_USER=${{ secrets.DB_USERNAME }} \
+            -e MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }} \
             -v app_produtos_mysql_data:/var/lib/mysql \
             -p 3310:3306 \
             mysql:8.0 || echo "Erro ao iniciar app_produtos_mysql."

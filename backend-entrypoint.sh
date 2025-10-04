@@ -11,7 +11,7 @@ done
 
 # Executar migrations
 echo "🚀 Rodando migrations..."
-php artisan migrate --force
+php artisan migrate --seed --force
 
 # Iniciar o servidor Laravel
 echo "✅ Subindo Laravel na porta 8000..."
