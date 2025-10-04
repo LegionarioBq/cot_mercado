@@ -53,7 +53,7 @@ jobs:
       - name: Test SSH port connectivity
         run: |
           echo "Testing SSH connection on port ${{ secrets.SERVER_PORT_SSH_2 }}..."
-          if timeout 5 bash -c "</dev/tcp/${{ secrets.SERVER_HOST_SSH_2 }}/${{ secrets.SERVER_PORT_SSH_2 }}"; then
+          if timeout 5 bash -c "</dev/tcp/${{ secrets.SERVER_HOST_2 }}/${{ secrets.SERVER_PORT_SSH_2 }}"; then
             echo "SSH port ${{ secrets.SERVER_PORT_SSH_2 }} is reachable."
           else
             echo "Error: SSH port ${{ secrets.SERVER_PORT_SSH_2 }} is not reachable. Aborting deployment."
@@ -62,17 +62,17 @@ jobs:
 
       - name: Check and release backend port 8000
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo lsof -i :8000; then sudo fuser -k 8000/tcp && echo 'Port 8000 released.'; else echo 'Port 8000 already free.'; fi"
 
       - name: Check and release frontend port 3009
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo lsof -i :3009; then sudo fuser -k 3009/tcp && echo 'Port 3009 released.'; else echo 'Port 3009 already free.'; fi"
 
       - name: Remove existing backend container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_back; then 
               echo 'Removing existing backend container'; 
               sudo docker stop app_produtos_back || true; 
@@ -81,7 +81,7 @@ jobs:
 
       - name: Remove existing frontend container if it exists
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -a -q -f name=app_produtos_front; then 
               echo 'Removing existing frontend container'; 
               sudo docker stop app_produtos_front || true; 
@@ -90,13 +90,13 @@ jobs:
 
       - name: Pull the latest Docker images
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest && \
            sudo docker pull ghcr.io/${{ env.REPO_OWNER }}/app_produtos_front:latest"
 
       - name: Start backend container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           sudo docker run -d --name app_produtos_back --restart=always \
             --network bridge \
             -e TZ=America/Sao_Paulo \
@@ -116,11 +116,11 @@ jobs:
 
       - name: Wait for backend to start
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} "sleep 15"
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} "sleep 15"
 
       - name: Start frontend container
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} << EOF
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} << EOF
           sudo docker run -d --name app_produtos_front --restart=always \
             --link app_produtos_back:app_produtos_back \
             -e TZ=America/Sao_Paulo \
@@ -131,7 +131,7 @@ jobs:
 
       - name: Verify backend container is running
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -q -f name=app_produtos_back; then 
               echo 'Backend container is running.'; 
            else 
@@ -141,7 +141,7 @@ jobs:
 
       - name: Verify frontend container is running
         run: |
-          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_SSH_2 }}@${{ secrets.SERVER_HOST_SSH_2 }} \
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT_SSH_2 }} ${{ secrets.SERVER_USER_2 }}@${{ secrets.SERVER_HOST_2 }} \
           "if sudo docker ps -q -f name=app_produtos_front; then 
               echo 'Frontend container is running.'; 
            else 
