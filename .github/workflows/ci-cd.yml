@@ -115,7 +115,7 @@ jobs:
             -e DB_HOST=127.0.0.1 \
             -e DB_PORT=3310 \
             -e DB_DATABASE=mercprodutos \
-            -e DB_USERNAME=root \
+            -e DB_USERNAME=teste \
             -e DB_PASSWORD=123 \
             -p 8000:8000 \
             ghcr.io/${{ env.REPO_OWNER }}/app_produtos_back:latest
