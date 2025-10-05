@@ -8,6 +8,8 @@ services:
     image: mysql:8.0
     container_name: app_produtos_mysql
     restart: always
+    env_file:
+      - ./backend/.env        # 👈 Reaproveita o .env do Laravel
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
@@ -27,18 +29,12 @@ services:
       dockerfile: Dockerfile.backend
     container_name: app_produtos_back
     restart: always
+    env_file:
+      - ./backend/.env        # 👈 Importa todas as variáveis do Laravel
     environment:
       TZ: America/Sao_Paulo
-      APP_ENV: ${APP_ENV}
-      APP_KEY: ${APP_KEY}
-      APP_DEBUG: ${APP_DEBUG}
-      APP_URL: ${APP_URL}
-      DB_CONNECTION: ${DB_CONNECTION}
-      DB_HOST: mysql          # 👈 conecta no serviço mysql
+      DB_HOST: mysql          # 👈 Sobrescreve o host para apontar para o serviço MySQL do Compose
       DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: root
-      DB_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - mysql
     ports:
@@ -58,6 +54,8 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: app_produtos_front
     restart: always
+    env_file:
+      - ./backend/.env        # 👈 Pode aproveitar variáveis como APP_URL, se quiser
     environment:
       TZ: America/Sao_Paulo
       VITE_API_URL: ${APP_URL}
