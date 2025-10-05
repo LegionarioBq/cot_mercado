@@ -9,21 +9,23 @@ services:
     container_name: app_produtos_mysql
     restart: always
     env_file:
-      - ./backend/.env
+      - ./.env
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
+      TZ: America/Sao_Paulo
     ports:
       - "3310:3306"
     volumes:
       - app_produtos_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_PASSWORD} --silent"]
+      interval: 5s
+      retries: 10
+      timeout: 5s
+      start_period: 10s
     networks:
       - app_network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
   # =========================
   # BACKEND (Laravel + PHP-FPM)
@@ -32,10 +34,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
+      args:
+        APP_ENV: ${APP_ENV}
     container_name: app_produtos_back
     restart: always
     env_file:
-      - ./backend/.env
+      - ./.env
     environment:
       TZ: America/Sao_Paulo
       DB_HOST: mysql
@@ -47,31 +51,47 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/var/www/html
-    entrypoint: ["/bin/sh", "-c", "php artisan migrate --seed --force && exec /usr/local/bin/backend-entrypoint.sh"]
+    command: >
+      sh -c "
+      echo '⏳ Aguardando banco de dados...';
+      until nc -z -v -w30 mysql 3306; do
+        echo 'Aguardando banco (mysql:3306)...';
+        sleep 5;
+      done;
+      if [ '${APP_ENV}' = 'local' ]; then
+        echo '🚀 Iniciando Laravel em modo desenvolvimento...';
+        php artisan serve --host=0.0.0.0 --port=8000;
+      else
+        echo '🏭 Executando migrations e iniciando servidor PHP-FPM...';
+        php artisan migrate --seed --force &&
+        exec /usr/local/bin/backend-entrypoint.sh;
+      fi"
     networks:
       - app_network
 
   # =========================
-  # FRONTEND (Vite/TS)
+  # FRONTEND (Vite / Apache)
   # =========================
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        APP_ENV: ${APP_ENV}
     container_name: app_produtos_front
     restart: always
     env_file:
-      - ./backend/.env
+      - ./.env
     environment:
       TZ: America/Sao_Paulo
       VITE_API_URL: ${APP_URL}
     depends_on:
       - backend
     ports:
-      - "3009:80"
+      # 👇 Porta 5173 para Vite local / 80 para Apache em produção
+      - "${FRONT_PORT:-5173}:5173"
     volumes:
-      - ./frontend:/usr/share/nginx/html
-    entrypoint: ["/usr/local/bin/frontend-entrypoint.sh"]
+      - ./frontend:/app
     networks:
       - app_network
 

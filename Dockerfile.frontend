@@ -9,29 +9,40 @@ WORKDIR /app
 COPY frontend/package*.json ./
 RUN npm ci --silent
 
-# Copiar código-fonte e gerar build de produção
+# Copiar código-fonte
 COPY frontend/ ./
+
+# Criar build de produção
 RUN npm run build
 
 # =============================
-# Etapa 2 - Servir com Apache
+# Etapa 2 - Ambiente final (modo Dev/Prod dinâmico)
 # =============================
-FROM httpd:2.4-alpine
+FROM node:20-alpine AS dev
 
-# Remover arquivos default do Apache
-RUN rm -rf /usr/local/apache2/htdocs/*
+WORKDIR /app
 
-# Copiar build gerado na etapa anterior
-COPY --from=build /app/dist/ /usr/local/apache2/htdocs/
+# Copiar código-fonte e build gerado
+COPY --from=build /app /app
 
-# Copiar arquivo de configuração customizada (opcional)
-# COPY ./frontend/httpd.conf /usr/local/apache2/conf/httpd.conf
+# Instalar Apache para servir build estático (modo produção)
+RUN apk add --no-cache apache2 bash
 
 # Configurar timezone
 ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Expor porta padrão
-EXPOSE 80
+# Expor portas: 5173 (Vite Dev) e 80 (Apache)
+EXPOSE 5173 80
 
-# Comando padrão (mantém o container ativo)
-CMD ["httpd-foreground"]
+# Script inteligente que decide o modo de execução
+CMD bash -c " \
+  if [ \"$APP_ENV\" = 'local' ]; then \
+      echo '🚀 Iniciando frontend em modo desenvolvimento (Vite)...'; \
+      cd /app && npm install && npm run dev -- --host 0.0.0.0 --port 5173; \
+  else \
+      echo '🏭 Servindo frontend com Apache (modo produção)...'; \
+      rm -rf /var/www/localhost/htdocs/* && \
+      cp -r /app/dist/* /var/www/localhost/htdocs/ && \
+      httpd -D FOREGROUND; \
+  fi"

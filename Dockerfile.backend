@@ -1,16 +1,20 @@
+# ===============================
 # Etapa 1 - Build das dependências do Laravel
+# ===============================
 FROM composer:2.6 AS vendor
 
 WORKDIR /app
 COPY backend/composer.json backend/composer.lock ./
 RUN composer install --no-dev --no-scripts --no-progress --no-interaction --prefer-dist
 
+# ===============================
 # Etapa 2 - PHP com extensões necessárias
+# ===============================
 FROM php:8.2-fpm
 
 # Instalar dependências do sistema e extensões PHP
 RUN apt-get update && apt-get install -y \
-    zip unzip git curl libpng-dev libxml2-dev libonig-dev netcat-openbsd \
+    zip unzip git curl libpng-dev libxml2-dev libonig-dev netcat-openbsd nano \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -35,8 +39,32 @@ RUN chown -R www-data:www-data /var/www/html \
 COPY ./backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
 RUN chmod +x /usr/local/bin/backend-entrypoint.sh
 
-# Expor porta do backend Laravel
+# ===============================
+# Suporte a AMBIENTE DE DESENVOLVIMENTO LOCAL
+# ===============================
+# Permitir usar npm, artisan serve e hot reload localmente dentro do container
+RUN apt-get update && apt-get install -y npm nodejs && npm install -g npm@latest
+
+# Copiar .env para dentro do container apenas em modo dev
+ARG APP_ENV=production
+ENV APP_ENV=${APP_ENV}
+
+# Se for ambiente local, rodar php artisan serve (hot reload)
+# Se for produção, roda via entrypoint normal (php-fpm)
+CMD if [ "$APP_ENV" = "local" ]; then \
+        echo "🚀 Iniciando Laravel em modo desenvolvimento..."; \
+        php artisan serve --host=0.0.0.0 --port=8000; \
+    else \
+        echo "🏭 Iniciando Laravel em modo produção..."; \
+        /usr/local/bin/backend-entrypoint.sh; \
+    fi
+
+# ===============================
+# Porta exposta (Backend Laravel)
+# ===============================
 EXPOSE 8000
 
-# Usar entrypoint customizado
+# ===============================
+# Entrypoint padrão (produção)
+# ===============================
 ENTRYPOINT ["/usr/local/bin/backend-entrypoint.sh"]
