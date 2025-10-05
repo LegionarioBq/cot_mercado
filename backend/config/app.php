@@ -112,6 +112,7 @@ return [
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
+        Laravel\Sanctum\SanctumServiceProvider::class,
 
 
         /*

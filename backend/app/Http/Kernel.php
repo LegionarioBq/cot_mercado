@@ -37,8 +37,13 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            // limite de requisições (pode remover se não quiser)
+            // Middleware do Sanctum (permite autenticação via token)
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+
+            // Limite de requisições (opcional)
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+
+            // Necessário para rotas com bindings (ex: {id})
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
