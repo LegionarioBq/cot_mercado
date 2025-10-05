@@ -1,22 +1,37 @@
-# Etapa 1 - Build do frontend
+# =============================
+# Etapa 1 - Build do frontend (Vite / TypeScript)
+# =============================
 FROM node:20 AS build
 
 WORKDIR /app
 
+# Copiar dependências e instalar
 COPY frontend/package*.json ./
 RUN npm ci --silent
 
+# Copiar código-fonte e gerar build de produção
 COPY frontend/ ./
 RUN npm run build
 
+# =============================
 # Etapa 2 - Servir com Apache
+# =============================
 FROM httpd:2.4-alpine
 
-# Remover arquivos default
+# Remover arquivos default do Apache
 RUN rm -rf /usr/local/apache2/htdocs/*
 
-# Copiar build do frontend para o diretório do Apache
+# Copiar build gerado na etapa anterior
 COPY --from=build /app/dist/ /usr/local/apache2/htdocs/
 
+# Copiar arquivo de configuração customizada (opcional)
+# COPY ./frontend/httpd.conf /usr/local/apache2/conf/httpd.conf
+
+# Configurar timezone
+ENV TZ=America/Sao_Paulo
+
+# Expor porta padrão
 EXPOSE 80
+
+# Comando padrão (mantém o container ativo)
 CMD ["httpd-foreground"]
