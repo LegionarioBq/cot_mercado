@@ -178,27 +178,27 @@ COT_MERCADO/
 - Se tentar enviar a mesma imagem, retorna:  
 
 
+### Suba os containers
 
-2. Suba os containers
-
-🚀 Script de Instalação da Base com Docker
+- 🚀 Script de Instalação da Base com Docker
 Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.04 LTS, incluindo:
 
-Atualização completa do sistema
-Definição do fuso horário (America/Sao_Paulo)
-Instalação da versão mais recente do Docker e dependências
-Habilitação dos serviços Docker e containerd para inicialização automática
-Verificação automática se o Docker já está instalado (evita reinstalação)
-Geração opcional de chave SSH RSA 2048 bits para uso em pipelines de CI/CD
+- Atualização completa do sistema
+- Definição do fuso horário (America/Sao_Paulo)
+- Instalação da versão mais recente do Docker e dependências
+- Habilitação dos serviços Docker e containerd para inicialização automática
+- Verificação automática se o Docker já está instalado (evita reinstalação)
+- Geração opcional de chave SSH RSA 2048 bits para uso em pipelines de CI/CD
 
 
-2.1. Executar remotamente via curl (sem baixar o arquivo)
+- Executar remotamente via curl (sem baixar o arquivo)
 Copie a linha abaixo e execute diretamente o comando no seu terminal:
 
 ```
   curl -sSL https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
 
 ```
+OU
 
 ```
   wget -qO- https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
@@ -213,7 +213,8 @@ docker-compose up -d
 
 ```
 
-3. Configure o backend
+
+2. Configure o backend
 
 cd backend
 cp .env.example .env
@@ -221,18 +222,19 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan storage:link
 
-4. Configure o frontend
+3. Configure o frontend
 
 cd frontend
 cp .env.example .env
 npm install
 npm run dev
 
-5. Acesse no navegador
+4. Acesse no navegador
 
 API Laravel → http://127.0.0.1:8000/api
 
-Frontend TypeScript → http://127.0.0.1:5137
+Frontend TypeScript → http://127.0.0.1:3000
+
 
 🧪 Testes Automatizados
 Criar banco de testes
@@ -269,7 +271,7 @@ mercprodutos → produção/desenvolvimento.
 
 mercprodutos_test → ambiente de testes.
 
-
+<br><br>
 📜 Fluxo Completo de Autenticação
 
 Usuário acessa tela de login (frontend).
@@ -286,7 +288,7 @@ Sanctum valida → se ok → Controller executa.
 
 Gates verificam permissões antes de ações críticas.
 
-
+<br>
 🖥️ Demonstração do Frontend
 
 Listagem com paginação.
@@ -297,7 +299,7 @@ Modal para criar/editar produtos com upload de imagem.
 
 Modal de visualização com preview da imagem e descrição.
 
-
+<br>
 ✨ Diferenciais Implementados
 
 Uso de SOLID (separação Controller/Service/Request).
@@ -313,7 +315,7 @@ Paginação e busca em tempo real.
 Pipeline CI/CD pronto (.github/workflows/ci-cd.yml).
 
 
-
+<br>
 📖 Requisitos Originais do Teste Técnico
 
 Este projeto foi desenvolvido seguindo integralmente os requisitos funcionais, diferenciais e extras do teste técnico, incluindo:
@@ -334,7 +336,7 @@ Testes automatizados
 
 Controle de permissões
 
-
+<br>
 ✅ Conclusão
 
 O sistema APP_PRODUTOS é uma aplicação web robusta, escalável e bem estruturada, que combina as melhores práticas de Laravel, TypeScript e Docker.
