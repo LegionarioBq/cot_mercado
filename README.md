@@ -191,7 +191,7 @@ Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.
 - Geração opcional de chave SSH RSA 2048 bits para uso em pipelines de CI/CD
 
 
-- Executar remotamente via curl (sem baixar o arquivo)
+Executar remotamente via curl (sem baixar o arquivo)
 Copie a linha abaixo e execute diretamente o comando no seu terminal:
 
 ```
@@ -205,6 +205,8 @@ OU
 
 ```
 
+No terminal WSL
+- abre o diretorio da aplicação.
 
 ```
 docker-compose down -v
@@ -216,18 +218,18 @@ docker-compose up -d
 
 2. Configure o backend
 
-cd backend
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan storage:link
+ - cd backend
+ - cp .env.example .env
+ - php artisan key:generate
+ - php artisan migrate --seed
+ - php artisan storage:link
 
 3. Configure o frontend
 
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
+ - cd frontend
+ - cp .env.example .env
+ - npm install
+ - npm run dev
 
 4. Acesse no navegador
 
@@ -235,7 +237,7 @@ API Laravel → http://127.0.0.1:8000/api
 
 Frontend TypeScript → http://127.0.0.1:3000
 
-
+<br>
 🧪 Testes Automatizados
 Criar banco de testes
 
