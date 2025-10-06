@@ -14,27 +14,132 @@ O objetivo principal foi atender a um **teste técnico** com foco em:
 ## 🚀 Estrutura do Projeto
 
 ```
-APP_PRODUTOS/
-├── .github/workflows/ci-cd.yml # Pipeline CI/CD
-├── backend/ # API em Laravel
-│ ├── app/Http/Controllers # Controllers (Produto, Auth)
-│ ├── app/Http/Requests # Validações (Store/Update)
-│ ├── app/Models # Models (Produto, ProdutoImage, User)
-│ ├── app/Services # Services (ProdutoService)
-│ ├── database/migrations # Migrations do banco
-│ └── .env # Configurações (APP_URL, DB, etc.)
-├── frontend/ # Frontend em TypeScript (Vite + TS)
-│ ├── src/
-│ │ ├── api.ts # Configuração do Axios + Token
-│ │ ├── produtos.ts # CRUD com modal, listagem, busca
-│ │ ├── login.ts # Tela e fluxo de autenticação
-│ │ ├── style.css # Estilos básicos
-│ │ └── index.html / index.ts # Entrada da aplicação
-│ └── .env
-├── Dockerfile.backend # Build do container Laravel
-├── Dockerfile.frontend # Build do container frontend
-├── docker-compose.yml # Orquestração (Laravel + MySQL + Frontend)
-└── README.md # Este documento
+COT_MERCADO/
+├── .github/
+│   └── workflows/
+│       └── ci-cd.yml                # Pipeline CI/CD (build + push + deploy)
+│
+├── backend/                         # API Laravel
+│   ├── app/
+│   │   ├── Console/
+│   │   │   ├── Commands/
+│   │   │   │   ├── CreateDatabase.php
+│   │   │   │   └── ResetTestDatabase.php
+│   │   │   └── Kernel.php
+│   │   │
+│   │   ├── Exceptions/
+│   │   │   └── Handler.php
+│   │   │
+│   │   ├── Http/
+│   │   │   ├── Controllers/         # Controllers principais
+│   │   │   │   ├── ProdutoController.php
+│   │   │   │   └── AuthController.php
+│   │   │   ├── Requests/            # Validações (FormRequest)
+│   │   │   └── Kernel.php
+│   │   │
+│   │   ├── Models/                  # Models do Eloquent
+│   │   │   ├── Produto.php
+│   │   │   ├── ProdutoImage.php
+│   │   │   └── User.php
+│   │   │
+│   │   ├── Providers/
+│   │   │   ├── AppServiceProvider.php
+│   │   │   ├── AuthServiceProvider.php
+│   │   │   └── RouteServiceProvider.php
+│   │   │
+│   │   └── Services/                # Regras de negócio (camada de serviço)
+│   │       └── ProdutoService.php
+│   │
+│   ├── bootstrap/
+│   │   └── app.php
+│   │
+│   ├── config/
+│   │   ├── app.php
+│   │   ├── auth.php
+│   │   ├── database.php
+│   │   ├── filesystems.php
+│   │   ├── logging.php
+│   │   ├── sanctum.php
+│   │   └── services.php
+│   │
+│   ├── database/
+│   │   ├── factories/
+│   │   │   ├── ProdutoFactory.php
+│   │   │   └── UserFactory.php
+│   │   │
+│   │   ├── migrations/
+│   │   │   ├── 0001_01_01_000000_create_users_table.php
+│   │   │   ├── 0001_01_01_000001_create_cache_table.php
+│   │   │   ├── 2025_09_25_180407_create_produtos_table.php
+│   │   │   ├── 2025_09_28_135927_create_produto_images_table.php
+│   │   │   └── (... demais migrations ...)
+│   │   │
+│   │   ├── seeders/
+│   │   │   ├── DatabaseSeeder.php
+│   │   │   └── ProdutoSeeder.php
+│   │   │
+│   │   └── database.sqlite           # Banco local para testes
+│   │
+│   ├── public/
+│   │   ├── img/
+│   │   ├── index.php
+│   │   └── .htaccess
+│   │
+│   ├── resources/
+│   │   └── views/
+│   │       └── welcome.blade.php
+│   │
+│   ├── routes/
+│   │   ├── api.php                   # Rotas de API (Produto, Auth)
+│   │   └── web.php                   # Rotas web básicas
+│   │
+│   ├── storage/
+│   │   ├── app/public/img/           # Uploads de produtos
+│   │   ├── framework/
+│   │   └── logs/
+│   │
+│   ├── tests/
+│   │   ├── Feature/
+│   │   │   ├── ProdutoApiTest.php
+│   │   │   ├── ProdutoSearchApiTest.php
+│   │   │   └── ExampleTest.php
+│   │   └── Unit/
+│   │       └── ExampleTest.php
+│   │
+│   ├── artisan
+│   ├── composer.json
+│   ├── composer.lock
+│   ├── phpunit.xml
+│   ├── .env
+│   ├── .env.example
+│   └── README.md
+│
+├── frontend/                        # Frontend TypeScript (Vite)
+│   ├── src/
+│   │   ├── api.ts                   # Configuração do Axios + Token
+│   │   ├── pages/
+│   │   │   ├── produtos.ts          # CRUD de produtos
+│   │   │   └── login.ts             # Tela de login e autenticação
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── index.html
+│   │   ├── index.ts                 # Ponto de entrada da aplicação
+│   │   └── utils.ts
+│   │
+│   ├── tsconfig.json
+│   ├── vite.config.js
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── .env
+│   └── README.md
+│
+├── docker-compose.yml                # Orquestração (Backend + Frontend + MySQL)
+├── Dockerfile.backend                # Build do container Laravel
+├── Dockerfile.frontend               # Build do container Vite/TS
+├── backend-entrypoint.sh             # Script de inicialização do backend
+├── frontend-entrypoint.sh            # Script de inicialização do frontend
+└── README.md                         # Documentação principal do projeto
+
 
 ```
 ---
@@ -73,9 +178,40 @@ APP_PRODUTOS/
 - Se tentar enviar a mesma imagem, retorna:  
 
 
+
 2. Suba os containers
 
+🚀 Script de Instalação da Base com Docker
+Este script automatiza a configuração inicial de um servidor Ubuntu Server 24.04 LTS, incluindo:
+
+Atualização completa do sistema
+Definição do fuso horário (America/Sao_Paulo)
+Instalação da versão mais recente do Docker e dependências
+Habilitação dos serviços Docker e containerd para inicialização automática
+Verificação automática se o Docker já está instalado (evita reinstalação)
+Geração opcional de chave SSH RSA 2048 bits para uso em pipelines de CI/CD
+
+
+2.1. Executar remotamente via curl (sem baixar o arquivo)
+Copie a linha abaixo e execute diretamente o comando no seu terminal:
+
+```
+  curl -sSL https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
+
+```
+
+```
+  wget -qO- https://raw.githubusercontent.com/LegionarioBq/DevOps/main/install_base_docker.sh | bash
+
+```
+
+
+```
+docker-compose down -v
+docker-compose build --no-cache
 docker-compose up -d
+
+```
 
 3. Configure o backend
 
@@ -96,32 +232,43 @@ npm run dev
 
 API Laravel → http://127.0.0.1:8000/api
 
-Frontend TypeScript → http://127.0.0.1:3000
+Frontend TypeScript → http://127.0.0.1:5137
 
 🧪 Testes Automatizados
 Criar banco de testes
 
-php artisan db:create mercprodutos_test
+```
+  php artisan db:create mercprodutos_test
 
+```
 
 Resetar banco de testes
 
-php artisan db:reset-test
+```
+  php artisan db:reset-test
+
+```
 
 Rodar migrations no banco de teste
 
-php artisan migrate --env=testing
+```
+  php artisan migrate --env=testing
+
+```
 
 Executar testes
 
-php artisan test
+```
+  php artisan test
 
+```
 
 Separação clara de bancos:
 
 mercprodutos → produção/desenvolvimento.
 
 mercprodutos_test → ambiente de testes.
+
 
 📜 Fluxo Completo de Autenticação
 
@@ -139,6 +286,7 @@ Sanctum valida → se ok → Controller executa.
 
 Gates verificam permissões antes de ações críticas.
 
+
 🖥️ Demonstração do Frontend
 
 Listagem com paginação.
@@ -148,6 +296,7 @@ Busca com filtro dinâmico.
 Modal para criar/editar produtos com upload de imagem.
 
 Modal de visualização com preview da imagem e descrição.
+
 
 ✨ Diferenciais Implementados
 
@@ -162,6 +311,8 @@ Frontend TypeScript com integração direta via Axios.
 Paginação e busca em tempo real.
 
 Pipeline CI/CD pronto (.github/workflows/ci-cd.yml).
+
+
 
 📖 Requisitos Originais do Teste Técnico
 
@@ -182,6 +333,7 @@ Arquitetura limpa + SOLID
 Testes automatizados
 
 Controle de permissões
+
 
 ✅ Conclusão
 
