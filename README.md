@@ -237,6 +237,8 @@ API Laravel → http://127.0.0.1:8000/api
 
 Frontend TypeScript → http://127.0.0.1:3000
 
+PhpMyAdmin → http://localhost:8082
+
 <br>
 🧪 Testes Automatizados
 Criar banco de testes

@@ -13,7 +13,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
-      TZ: America/Sao_Paulo
+      TZ: ${TZ}
     ports:
       - "3310:3306"
     volumes:
@@ -24,6 +24,30 @@ services:
       retries: 10
       timeout: 5s
       start_period: 10s
+    networks:
+      - app_network
+
+  # =========================
+  # PHPMYADMIN
+  # =========================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: app_produtos_phpmyadmin
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      PMA_HOST: ${DB_HOST}
+      PMA_PORT: ${DB_PORT}
+      PMA_USER: ${DB_USERNAME}
+      PMA_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_LIMIT: 200M
+      TZ: ${TZ}
+    ports:
+      - "8082:80" # Acesse http://localhost:8082
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - app_network
 
@@ -41,9 +65,9 @@ services:
     env_file:
       - ./.env
     environment:
-      TZ: America/Sao_Paulo
-      DB_HOST: mysql
-      DB_PORT: 3306
+      TZ: ${TZ}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
     depends_on:
       mysql:
         condition: service_healthy
@@ -83,12 +107,11 @@ services:
     env_file:
       - ./.env
     environment:
-      TZ: America/Sao_Paulo
+      TZ: ${TZ}
       VITE_API_URL: ${APP_URL}
     depends_on:
       - backend
     ports:
-      # 👇 Porta 5173 para Vite local / 80 para Apache em produção
       - "${FRONT_PORT:-5173}:5173"
     volumes:
       - ./frontend:/app
