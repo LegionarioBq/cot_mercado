@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use App\Models\Produto;
+use App\Models\User;
 
 class ProdutoApiTest extends TestCase
 {
@@ -15,7 +16,13 @@ class ProdutoApiTest extends TestCase
     {
         parent::setUp();
 
-        // Roda o seeder que popula os 20 produtos do SQL
+        // 🔒 Cria e autentica um usuário ADMIN para ter permissão total nos testes
+        $user = User::factory()->create([
+            'type' => 'admin', // 👈 garante permissão de criação/edição/exclusão
+        ]);
+        $this->actingAs($user, 'sanctum');
+
+        // 🧩 Roda o seeder que popula os 20 produtos do SQL
         $this->seed(\Database\Seeders\ProdutoSeeder::class);
     }
 
@@ -42,7 +49,8 @@ class ProdutoApiTest extends TestCase
         $payload = [
             'nome' => 'Notebook Gamer',
             'preco' => 5999.90,
-            'descricao' => 'RTX 4060, 16GB RAM'
+            'descricao' => 'RTX 4060, 16GB RAM',
+            'quantidade' => 10
         ];
 
         $response = $this->postJson('/api/produtos', $payload);
@@ -72,7 +80,8 @@ class ProdutoApiTest extends TestCase
 
         $response = $this->putJson("/api/produtos/{$produto->id}", [
             'nome' => 'Produto Atualizado',
-            'preco' => 999.99
+            'preco' => 999.99,
+            'quantidade' => 15 // 👈 adiciona também se o update exigir validação de quantidade
         ]);
 
         $response->assertStatus(200)

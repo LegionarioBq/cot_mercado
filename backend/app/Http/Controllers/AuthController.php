@@ -13,25 +13,22 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        // Validação dos campos
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        // Se não autenticar
         if (!Auth::attempt($credentials)) {
             throw ValidationException::withMessages([
                 'email' => ['As credenciais fornecidas estão incorretas.'],
             ]);
         }
 
-        // Usuário autenticado
-        // mais seguro que $request->user()
         $user = Auth::user();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
+            'success' => true,
             'message' => 'Login realizado com sucesso',
             'user'    => [
                 'id'    => $user->id,
@@ -51,7 +48,9 @@ class AuthController extends Controller
         $request->user()->tokens()->delete();
 
         return response()->json([
+            'success' => true,
             'message' => 'Logout realizado com sucesso',
+            'action'  => 'logout'
         ]);
     }
 }

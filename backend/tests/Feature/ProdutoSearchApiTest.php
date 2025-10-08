@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 use App\Models\Produto;
+use App\Models\User; // 👈 adicionado
 
 class ProdutoSearchApiTest extends TestCase
 {
@@ -14,6 +15,10 @@ class ProdutoSearchApiTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Cria e autentica um usuário Sanctum para os testes 🔒
+        $user = User::factory()->create();
+        $this->actingAs($user, 'sanctum');
 
         // Roda o seeder com os 20 produtos
         $this->seed(\Database\Seeders\ProdutoSeeder::class);

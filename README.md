@@ -34,6 +34,8 @@ COT_MERCADO/
 │   │   │   ├── Controllers/         # Controllers principais
 │   │   │   │   ├── ProdutoController.php
 │   │   │   │   └── AuthController.php
+│   │   │   ├── Middleware/          # Validações (FormRequest)
+│   │   │   │   └── Authenticate.php
 │   │   │   ├── Requests/            # Validações (FormRequest)
 │   │   │   └── Kernel.php
 │   │   │
@@ -209,12 +211,26 @@ No terminal WSL
 - abre o diretorio da aplicação.
 
 ```
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up -d
+  docker-compose down -v
+  docker-compose build --no-cache
+  docker-compose up -d
 
 ```
+🧰 Comandos Docker Úteis
+Acessar containers manualmente
 
+```
+  docker exec -it app_produtos_mysql bash
+  docker exec -it app_produtos_back bash
+  docker exec -it app_produtos_front sh
+
+```
+  Rodar testes dentro do container do backend
+
+```
+  docker exec -it app_produtos_back php artisan test
+
+```
 
 2. Configure o backend
 
@@ -295,13 +311,37 @@ Gates verificam permissões antes de ações críticas.
 <br>
 🖥️ Demonstração do Frontend
 
-Listagem com paginação.
+- Listagem com paginação.
 
-Busca com filtro dinâmico.
+- Busca com filtro dinâmico.
 
-Modal para criar/editar produtos com upload de imagem.
+- Modal para criar/editar produtos com upload de imagem.
 
-Modal de visualização com preview da imagem e descrição.
+- Modal de visualização com preview da imagem e descrição.
+
+🖥️ Interface do Sistema <br>
+Tela principal – Gestão de Produtos
+<p align="center"> <img src="736f371a-5cc0-4470-88d9-33c44636be90.png" alt="Gestão de Produtos" width="850"> </p>
+Tela de detalhes
+<p align="center"> <img src="0a0af6eb-1d35-4525-9dfa-c649b154d274.png" alt="Detalhes do Produto" width="850"> </p>
+Tela de edição
+<p align="center"> <img src="346aad63-b32c-44be-b595-49db3973b16b.png" alt="Editar Produto" width="850"> </p>
+Tela de criação
+<p align="center"> <img src="5f4b53a8-0e7d-4cf4-b131-6d1d5352f16d.png" alt="Adicionar Produto" width="850"> </p>
+Confirmação de exclusão
+<p align="center"> <img src="1b2794dd-d6da-4bc2-962c-7c57a8e14edb.png" alt="Confirmar Exclusão" width="850"> </p>
+Sucesso na atualização
+<p align="center"> <img src="215ec2a4-1608-4910-8948-1a580707fb81.png" alt="Produto Atualizado" width="850"> </p>
+Busca de produto específica
+<p align="center"> <img src="62b92eaa-8256-4668-8ffe-21d7ef0ba0a0.png" alt="Busca de Produto" width="850"> </p>
+
+
+<br>
+🧪 Testes Automatizados
+<p align="center"> <img src="756a1531-9434-49da-9932-53f3e43469a9.png" alt="Resultados dos testes" width="750"> </p>
+
+Todos os 13 testes passaram com sucesso ✅
+Incluindo CRUD, buscas, autenticação Sanctum e validações.
 
 <br>
 ✨ Diferenciais Implementados
