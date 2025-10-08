@@ -17,131 +17,133 @@ O objetivo principal foi atender a um **teste técnico** com foco em:
 COT_MERCADO/
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml                # Pipeline CI/CD (build + push + deploy)
+│       └── ci-cd.yml                # Pipeline de CI/CD que faz build, push e deploy automático da aplicação via GitHub Actions.
 │
-├── backend/                         # API Laravel
+├── backend/                         # Diretório principal do backend (API Laravel)
 │   ├── app/
 │   │   ├── Console/
 │   │   │   ├── Commands/
-│   │   │   │   ├── CreateDatabase.php
-│   │   │   │   └── ResetTestDatabase.php
-│   │   │   └── Kernel.php
+│   │   │   │   ├── CreateDatabase.php        # Comando Artisan customizado para criar banco de dados via terminal.
+│   │   │   │   └── ResetTestDatabase.php     # Comando Artisan para resetar o banco de testes automatizados.
+│   │   │   └── Kernel.php                   # Registra os comandos Artisan e agendamentos do sistema.
 │   │   │
 │   │   ├── Exceptions/
-│   │   │   └── Handler.php
+│   │   │   └── Handler.php                  # Manipula exceções e erros globais da aplicação.
 │   │   │
 │   │   ├── Http/
-│   │   │   ├── Controllers/         # Controllers principais
-│   │   │   │   ├── ProdutoController.php
-│   │   │   │   └── AuthController.php
-│   │   │   ├── Middleware/          # Validações (FormRequest)
-│   │   │   │   └── Authenticate.php
-│   │   │   ├── Requests/            # Validações (FormRequest)
-│   │   │   └── Kernel.php
+│   │   │   ├── Controllers/
+│   │   │   │   ├── ProdutoController.php    # Controla as operações CRUD de produtos (listar, criar, editar, excluir, buscar).
+│   │   │   │   └── AuthController.php       # Gerencia login/logout e autenticação de usuários via Laravel Sanctum.
+│   │   │   ├── Middleware/
+│   │   │   │   └── Authenticate.php         # Middleware que intercepta requisições protegidas e valida o token Sanctum.
+│   │   │   ├── Requests/
+│   │   │   │   ├── ProdutoStoreRequest.php  # Define as regras de validação ao criar um produto.
+│   │   │   │   └── ProdutoUpdateRequest.php # Define as regras de validação ao atualizar um produto.
+│   │   │   └── Kernel.php                   # Registra middlewares e grupos de rotas (web, api, sanctum etc).
 │   │   │
-│   │   ├── Models/                  # Models do Eloquent
-│   │   │   ├── Produto.php
-│   │   │   ├── ProdutoImage.php
-│   │   │   └── User.php
+│   │   ├── Models/
+│   │   │   ├── Produto.php                  # Model principal que representa a tabela `produtos` e suas relações.
+│   │   │   ├── ProdutoImage.php             # Model das imagens dos produtos, vinculado via relação `hasMany`.
+│   │   │   └── User.php                     # Model do usuário com autenticação via Sanctum.
 │   │   │
 │   │   ├── Providers/
-│   │   │   ├── AppServiceProvider.php
-│   │   │   ├── AuthServiceProvider.php
-│   │   │   └── RouteServiceProvider.php
+│   │   │   ├── AppServiceProvider.php       # Registra serviços e configurações globais.
+│   │   │   ├── AuthServiceProvider.php      # Registra as policies e gates de autorização.
+│   │   │   └── RouteServiceProvider.php     # Define o carregamento das rotas web e API.
 │   │   │
-│   │   └── Services/                # Regras de negócio (camada de serviço)
-│   │       └── ProdutoService.php
+│   │   └── Services/
+│   │       └── ProdutoService.php           # Camada de serviço responsável pela regra de negócio dos produtos (CRUD + upload).
 │   │
 │   ├── bootstrap/
-│   │   └── app.php
+│   │   └── app.php                          # Inicializa a aplicação Laravel (configuração base do framework).
 │   │
 │   ├── config/
-│   │   ├── app.php
-│   │   ├── auth.php
-│   │   ├── database.php
-│   │   ├── filesystems.php
-│   │   ├── logging.php
-│   │   ├── sanctum.php
-│   │   └── services.php
+│   │   ├── app.php                          # Configurações principais (timezone, providers, locale, etc.).
+│   │   ├── auth.php                         # Configurações de autenticação (guards, providers, passwords).
+│   │   ├── database.php                     # Configurações do banco de dados (MySQL, SQLite, etc.).
+│   │   ├── filesystems.php                  # Configurações de armazenamento (local, public, s3, etc.).
+│   │   ├── logging.php                      # Configurações de logs (canal stack, daily, etc.).
+│   │   ├── sanctum.php                      # Configuração específica do Laravel Sanctum.
+│   │   └── services.php                     # Integrações externas (e-mail, API keys, etc.).
 │   │
 │   ├── database/
 │   │   ├── factories/
-│   │   │   ├── ProdutoFactory.php
-│   │   │   └── UserFactory.php
+│   │   │   ├── ProdutoFactory.php           # Gera produtos fake para testes e seeders.
+│   │   │   └── UserFactory.php              # Gera usuários fake para testes e autenticação.
 │   │   │
 │   │   ├── migrations/
-│   │   │   ├── 0001_01_01_000000_create_users_table.php
-│   │   │   ├── 0001_01_01_000001_create_cache_table.php
-│   │   │   ├── 2025_09_25_180407_create_produtos_table.php
-│   │   │   ├── 2025_09_28_135927_create_produto_images_table.php
-│   │   │   └── (... demais migrations ...)
+│   │   │   ├── 0001_01_01_000000_create_users_table.php   # Cria a tabela de usuários.
+│   │   │   ├── 0001_01_01_000001_create_cache_table.php   # Cria a tabela de cache.
+│   │   │   ├── 2025_09_25_180407_create_produtos_table.php # Cria a tabela de produtos.
+│   │   │   ├── 2025_09_28_135927_create_produto_images_table.php # Cria a tabela de imagens dos produtos.
+│   │   │   └── (... demais migrations ...)   # Outras migrations automáticas do Laravel.
 │   │   │
 │   │   ├── seeders/
-│   │   │   ├── DatabaseSeeder.php
-│   │   │   └── ProdutoSeeder.php
+│   │   │   ├── DatabaseSeeder.php           # Roda todos os seeders de forma centralizada.
+│   │   │   └── ProdutoSeeder.php            # Insere dados fake iniciais na tabela `produtos`.
 │   │   │
-│   │   └── database.sqlite           # Banco local para testes
+│   │   └── database.sqlite                  # Banco de dados SQLite usado apenas em ambiente de testes.
 │   │
 │   ├── public/
-│   │   ├── img/
-│   │   ├── index.php
-│   │   └── .htaccess
+│   │   ├── img/                             # Diretório público onde ficam armazenadas as imagens enviadas.
+│   │   ├── index.php                        # Ponto de entrada HTTP do Laravel.
+│   │   └── .htaccess                        # Regras de reescrita de URL para Apache.
 │   │
 │   ├── resources/
 │   │   └── views/
-│   │       └── welcome.blade.php
+│   │       └── welcome.blade.php            # Página inicial padrão do Laravel (não utilizada no projeto principal).
 │   │
 │   ├── routes/
-│   │   ├── api.php                   # Rotas de API (Produto, Auth)
-│   │   └── web.php                   # Rotas web básicas
+│   │   ├── api.php                          # Define as rotas da API (produtos, autenticação, upload, etc.).
+│   │   └── web.php                          # Define as rotas web básicas.
 │   │
 │   ├── storage/
-│   │   ├── app/public/img/           # Uploads de produtos
-│   │   ├── framework/
-│   │   └── logs/
+│   │   ├── app/public/img/                  # Diretório de armazenamento dos uploads de produtos.
+│   │   ├── framework/                       # Cache interno do Laravel.
+│   │   └── logs/                            # Arquivos de log da aplicação.
 │   │
 │   ├── tests/
 │   │   ├── Feature/
-│   │   │   ├── ProdutoApiTest.php
-│   │   │   ├── ProdutoSearchApiTest.php
-│   │   │   └── ExampleTest.php
+│   │   │   ├── ProdutoApiTest.php           # Testa o CRUD completo de produtos (listar, criar, editar, excluir).
+│   │   │   ├── ProdutoSearchApiTest.php     # Testa o sistema de busca e paginação de produtos.
+│   │   │   └── ExampleTest.php              # Teste padrão de exemplo do Laravel.
 │   │   └── Unit/
-│   │       └── ExampleTest.php
+│   │       └── ExampleTest.php              # Teste unitário básico (exemplo de validação).
 │   │
-│   ├── artisan
-│   ├── composer.json
-│   ├── composer.lock
-│   ├── phpunit.xml
-│   ├── .env
-│   ├── .env.example
-│   └── README.md
+│   ├── artisan                              # CLI do Laravel (executa comandos, migrations, seeds, testes, etc.).
+│   ├── composer.json                        # Dependências PHP do projeto e scripts do Composer.
+│   ├── composer.lock                        # Versões exatas das dependências instaladas.
+│   ├── phpunit.xml                          # Configuração dos testes PHPUnit.
+│   ├── .env                                 # Arquivo de variáveis de ambiente (DB, APP_KEY, etc.).
+│   ├── .env.example                         # Exemplo do arquivo `.env`.
+│   └── README.md                            # Documentação interna do backend.
 │
-├── frontend/                        # Frontend TypeScript (Vite)
+├── frontend/                                # Aplicação frontend escrita em TypeScript + Vite
 │   ├── src/
-│   │   ├── api.ts                   # Configuração do Axios + Token
+│   │   ├── api.ts                           # Configura o Axios para comunicação com o backend e define headers do token.
 │   │   ├── pages/
-│   │   │   ├── produtos.ts          # CRUD de produtos
-│   │   │   └── login.ts             # Tela de login e autenticação
+│   │   │   ├── produtos.ts                  # Implementa o CRUD completo (listar, criar, editar, excluir, buscar produtos).
+│   │   │   └── login.ts                     # Tela de login, integração com AuthController e controle de token Sanctum.
 │   │   ├── css/
-│   │   │   └── style.css
-│   │   ├── index.html
-│   │   ├── index.ts                 # Ponto de entrada da aplicação
-│   │   └── utils.ts
+│   │   │   └── style.css                    # Estilos visuais principais da aplicação (tabela, botões, modais).
+│   │   ├── index.html                       # Página HTML principal (renderiza o app TypeScript).
+│   │   ├── index.ts                         # Ponto de entrada do app, inicializa o login e carrega a página de produtos.
+│   │   └── utils.ts                         # Funções auxiliares reutilizáveis (formatação, alertas, etc.).
 │   │
-│   ├── tsconfig.json
-│   ├── vite.config.js
-│   ├── package.json
-│   ├── package-lock.json
-│   ├── .env
-│   └── README.md
+│   ├── tsconfig.json                        # Configuração do compilador TypeScript.
+│   ├── vite.config.js                       # Configurações de build e servidor local do Vite.
+│   ├── package.json                         # Dependências e scripts npm.
+│   ├── package-lock.json                    # Versões exatas das dependências npm.
+│   ├── .env                                 # Variáveis de ambiente do frontend (URL da API, modo DEV/PROD).
+│   └── README.md                            # Documentação interna do frontend.
 │
-├── docker-compose.yml                # Orquestração (Backend + Frontend + MySQL)
-├── Dockerfile.backend                # Build do container Laravel
-├── Dockerfile.frontend               # Build do container Vite/TS
-├── backend-entrypoint.sh             # Script de inicialização do backend
-├── frontend-entrypoint.sh            # Script de inicialização do frontend
-└── README.md                         # Documentação principal do projeto
-
+├── docker-compose.yml                       # Orquestra containers do backend, frontend e banco MySQL.
+├── Dockerfile.backend                       # Define o build do container Laravel (Composer, PHP 8.2, etc.).
+├── Dockerfile.frontend                      # Define o build do container Vite/TypeScript.
+├── backend-entrypoint.sh                    # Script de inicialização do backend (migrações, storage link, etc.).
+├── frontend-entrypoint.sh                   # Script de inicialização do frontend (npm install + vite).
+└── README.md                                # Documentação principal do projeto (instalação, uso e screenshots).
+├── imagens/                                 # ← 📁 pasta criada para imagens usadas no README
 
 ```
 ---
@@ -320,28 +322,54 @@ Gates verificam permissões antes de ações críticas.
 - Modal de visualização com preview da imagem e descrição.
 
 🖥️ Interface do Sistema <br>
-Tela principal – Gestão de Produtos
-<p align="center"> <img src="736f371a-5cc0-4470-88d9-33c44636be90.png" alt="Gestão de Produtos" width="850"> </p>
-Tela de detalhes
-<p align="center"> <img src="0a0af6eb-1d35-4525-9dfa-c649b154d274.png" alt="Detalhes do Produto" width="850"> </p>
-Tela de edição
-<p align="center"> <img src="346aad63-b32c-44be-b595-49db3973b16b.png" alt="Editar Produto" width="850"> </p>
-Tela de criação
-<p align="center"> <img src="5f4b53a8-0e7d-4cf4-b131-6d1d5352f16d.png" alt="Adicionar Produto" width="850"> </p>
-Confirmação de exclusão
-<p align="center"> <img src="1b2794dd-d6da-4bc2-962c-7c57a8e14edb.png" alt="Confirmar Exclusão" width="850"> </p>
-Sucesso na atualização
-<p align="center"> <img src="215ec2a4-1608-4910-8948-1a580707fb81.png" alt="Produto Atualizado" width="850"> </p>
-Busca de produto específica
-<p align="center"> <img src="62b92eaa-8256-4668-8ffe-21d7ef0ba0a0.png" alt="Busca de Produto" width="850"> </p>
+
+### Tela principal
+<p align="center">
+  <img src="imagens/listaprodutos.png" alt="Gestão de Produtos" width="850">
+</p>
+
+### Tela de detalhes
+<p align="center">
+  <img src="imagens/visualizaprodutos.png" alt="Detalhes do Produto" width="850">
+</p>
+
+### Tela de edição
+<p align="center">
+  <img src="imagens/editprodutos.png" alt="Editar Produto" width="850">
+</p>
+
+### Tela de criação
+<p align="center">
+  <img src="imagens/addprodutos.png" alt="Adicionar Produto" width="850">
+</p>
+
+### Confirmação de exclusão
+<p align="center">
+  <img src="imagens/exclusaoprodutos.png" alt="Confirmar Exclusão" width="850">
+</p>
+
+### Sucesso na atualização
+<p align="center">
+  <img src="imagens/atualizarprodutos.png" alt="Produto Atualizado" width="850">
+</p>
+
+### Busca de produto específica
+<p align="center">
+  <img src="imagens/findprodutos.png" alt="Busca de Produto" width="850">
+</p>
 
 
 <br>
-🧪 Testes Automatizados
-<p align="center"> <img src="756a1531-9434-49da-9932-53f3e43469a9.png" alt="Resultados dos testes" width="750"> </p>
 
-Todos os 13 testes passaram com sucesso ✅
-Incluindo CRUD, buscas, autenticação Sanctum e validações.
+## 🧪 Testes Automatizados
+
+<p align="center">
+  <img src="imagens/testeResultado.png" alt="Resultados dos testes" width="750">
+</p>
+
+Todos os **13 testes** passaram com sucesso ✅  
+Incluindo **CRUD**, **buscas**, **autenticação Sanctum** e **validações**.
+
 
 <br>
 ✨ Diferenciais Implementados
