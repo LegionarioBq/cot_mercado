@@ -330,7 +330,7 @@ Gates verificam permissões antes de ações críticas.
 
 ### Tela de detalhes
 <p align="center">
-  <img src="imagens/visualizaprodutos.png" alt="Detalhes do Produto" width="850">
+  <img src="imagens/visualizaproutos.png" alt="Detalhes do Produto" width="850">
 </p>
 
 ### Tela de edição
