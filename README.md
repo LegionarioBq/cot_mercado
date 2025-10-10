@@ -60,6 +60,7 @@ COT_MERCADO/
 │   ├── config/
 │   │   ├── app.php                          # Configurações principais (timezone, providers, locale, etc.).
 │   │   ├── auth.php                         # Configurações de autenticação (guards, providers, passwords).
+│   │   ├── cors.php                         # Configurações de CORS entre backend/frontend
 │   │   ├── database.php                     # Configurações do banco de dados (MySQL, SQLite, etc.).
 │   │   ├── filesystems.php                  # Configurações de armazenamento (local, public, s3, etc.).
 │   │   ├── logging.php                      # Configurações de logs (canal stack, daily, etc.).

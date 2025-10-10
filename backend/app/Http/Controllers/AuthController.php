@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     *  Realiza login e retorna token Sanctum
+     * Realiza login e retorna token Sanctum
      */
     public function login(Request $request)
     {
@@ -19,38 +18,49 @@ class AuthController extends Controller
         ]);
 
         if (!Auth::attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'email' => ['As credenciais fornecidas estão incorretas.'],
-            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuário ou senha inválidos.',
+            ], 401);
         }
 
         $user = Auth::user();
+
+        // Opcional: remove tokens antigos antes de criar um novo
+        $user->tokens()->delete();
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
             'message' => 'Login realizado com sucesso',
-            'user'    => [
+            'user' => [
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
-                'type'  => $user->type,
+                'type'  => $user->type ?? 'user',
             ],
-            'token'   => $token,
+            'token' => $token,
+        ], 200, [
+            'Content-Type' => 'application/json',
         ]);
     }
 
     /**
-     *  Realiza logout e revoga todos os tokens do usuário
+     * Realiza logout e revoga todos os tokens do usuário
      */
     public function logout(Request $request)
     {
-        $request->user()->tokens()->delete();
+        $user = $request->user();
+
+        if ($user) {
+            $user->tokens()->delete();
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Logout realizado com sucesso',
-            'action'  => 'logout'
+            'action'  => 'logout',
         ]);
     }
 }

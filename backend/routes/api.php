@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\AuthController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,22 @@ use App\Http\Controllers\AuthController;
 */
 Route::post('/login', [AuthController::class, 'login']);
 
+/*
+|--------------------------------------------------------------------------
+| Fallback de Autenticação (para middleware auth:sanctum)
+|--------------------------------------------------------------------------
+| Quando o usuário tenta acessar uma rota protegida sem token válido,
+| o Sanctum chama internamente o middleware Authenticate, que procura
+| pela rota nomeada 'login'. 
+| Aqui definimos a rota /login (GET) apenas para evitar esse erro,
+| e retornamos uma resposta JSON apropriada.
+*/
+Route::get('/login', function (Request $request) {
+    return response()->json([
+        'error' => 'Não autenticado',
+        'message' => 'Token de acesso inválido ou ausente. Faça login novamente para continuar.'
+    ], 401);
+})->name('login');
 
 /*
 |--------------------------------------------------------------------------
@@ -40,4 +57,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/produtos', [ProdutoController::class, 'store']);
     Route::put('/produtos/{id}', [ProdutoController::class, 'update']);
     Route::delete('/produtos/{id}', [ProdutoController::class, 'destroy']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Rota Fallback (404)
+|--------------------------------------------------------------------------
+| Caso o cliente tente acessar uma rota inexistente da API, retornamos
+| um JSON padronizado ao invés de uma página HTML.
+*/
+Route::fallback(function () {
+    return response()->json([
+        'error' => 'Rota não encontrada',
+        'message' => 'A rota que você tentou acessar não existe nesta API.'
+    ], 404);
 });
