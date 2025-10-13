@@ -1,40 +1,67 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+
+/**
+ * Configuração base do Axios
+ * - Usa variável de ambiente VITE_API_URL (do .env do Vite)
+ * - Suporte total a Bearer Token (sem cookies nem CSRF)
+ * - Compatível com Laravel Sanctum via Authorization header
+ */
+
+// console.log("🧩 VITE_API_URL:", import.meta.env.VITE_API_URL);
 
 const api = axios.create({
-  baseURL: (window as any)._env_?.API_URL || "http://127.0.0.1:8000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  // true = envia cookies (para modo SPA com Sanctum + CSRF)
+  // false = modo API via token Bearer (seu caso)
+  withCredentials: true,
 });
 
-//console.log("Axios configurado com baseURL:", api.defaults.baseURL);
-
-// Interceptor de requisição (adiciona token e loga URL)
+/**
+ * Interceptor de requisição
+ * - Adiciona o token Bearer armazenado no localStorage
+ * - Pode exibir logs de requisições para debug
+ */
 api.interceptors.request.use(
-  (config) => {
+  (config: AxiosRequestConfig) => {
     const token = localStorage.getItem("auth_token");
-    if (token) {
+
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    const fullUrl = `${config.baseURL ?? ""}${config.url ?? ""}`;
-    //console.log("Requisição feita para:", fullUrl);
+    // Log opcional (útil durante o desenvolvimento)
+    // const fullUrl = `${config.baseURL ?? ""}${config.url ?? ""}`;
+    // console.log(`[API] ${config.method?.toUpperCase()} → ${fullUrl}`);
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error)
 );
 
-// Interceptor de resposta (captura erro 401 e redireciona)
+/**
+ * Interceptor de resposta
+ * - Trata erros de autenticação (401)
+ * - Limpa token e redireciona para login
+ */
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
-      //console.warn("Sessão expirada. Redirecionando para login...");
+      // Remove token inválido do localStorage
       localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_type");
 
-      // só recarrega se não estiver na tela de login
+      // Evita loop de redirecionamento
       if (!window.location.pathname.includes("login")) {
-        window.location.reload();
+        // Recarrega ou redireciona para a tela de login
+        window.location.href = "/login";
       }
     }
+
     return Promise.reject(error);
   }
 );

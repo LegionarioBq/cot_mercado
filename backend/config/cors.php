@@ -11,15 +11,21 @@ return [
     | da API, login/logout e o endpoint Sanctum CSRF (caso seja usado).
     |
     */
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
+    'paths' => [
+        'api/*',
+        'login',
+        'produtos',
+        'logout',
+        'sanctum/csrf-cookie',
+    ],
 
     /*
     |--------------------------------------------------------------------------
     | Allowed Methods
     |--------------------------------------------------------------------------
     |
-    | Quais métodos HTTP são permitidos nas requisições vindas de outras origens.
-    | '*' permite todos (GET, POST, PUT, DELETE, OPTIONS).
+    | Métodos HTTP permitidos nas requisições vindas de outras origens.
+    | '*' libera todos (GET, POST, PUT, DELETE, OPTIONS).
     |
     */
     'allowed_methods' => ['*'],
@@ -29,18 +35,23 @@ return [
     | Allowed Origins
     |--------------------------------------------------------------------------
     |
-    | Defina as origens permitidas (domínios) — inclua o endereço do seu frontend.
-    | No modo local, o React/Vite roda em http://localhost:5173
+    | Domínios permitidos a acessar esta API.
+    | Puxa automaticamente do .env (CORS_ALLOWED_ORIGINS).
+    | Pode incluir localhost, 127.0.0.1, ou o container (app_produtos_front).
+    | 'allowed_origins' => explode(',', env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173')),
     |
     */
-    'allowed_origins' => ['http://localhost:5173'],
-
+    'allowed_origins' => [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://app_produtos_front:5173',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Allowed Origins Patterns
     |--------------------------------------------------------------------------
     |
-    | Pode ser usado para expressões regulares, útil em ambientes de teste.
+    | Pode ser usado para padrões de subdomínios (opcional).
     |
     */
     'allowed_origins_patterns' => [],
@@ -50,8 +61,8 @@ return [
     | Allowed Headers
     |--------------------------------------------------------------------------
     |
-    | Quais cabeçalhos podem ser enviados do frontend para a API.
-    | '*' permite todos, incluindo Authorization, Content-Type etc.
+    | Cabeçalhos aceitos das requisições do frontend.
+    | '*' libera todos, incluindo Authorization (Bearer Token).
     |
     */
     'allowed_headers' => ['*'],
@@ -61,8 +72,8 @@ return [
     | Exposed Headers
     |--------------------------------------------------------------------------
     |
-    | Cabeçalhos que podem ser expostos ao frontend. Normalmente não é necessário
-    | adicionar nada aqui para APIs básicas.
+    | Cabeçalhos que podem ser expostos ao frontend.
+    | Normalmente não é necessário adicionar nada aqui.
     |
     */
     'exposed_headers' => [],
@@ -72,7 +83,8 @@ return [
     | Max Age
     |--------------------------------------------------------------------------
     |
-    | Define quanto tempo o navegador pode cachear as permissões CORS (em segundos).
+    | Tempo (em segundos) que o navegador pode cachear a política CORS.
+    | 0 = sempre verificar.
     |
     */
     'max_age' => 0,
@@ -82,8 +94,8 @@ return [
     | Supports Credentials
     |--------------------------------------------------------------------------
     |
-    | Se verdadeiro, permite envio de cookies, tokens e headers de autenticação
-    | via requisições CORS (necessário para Sanctum).
+    | Se true, permite envio de tokens (Bearer), cookies e cabeçalhos CORS.
+    | É obrigatório para autenticação via Sanctum.
     |
     */
     'supports_credentials' => true,

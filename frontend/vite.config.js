@@ -7,6 +7,6 @@ export default defineConfig({
     emptyOutDir: true
   },
   server: {
-    port: 3000, // frontend roda em http://localhost:3000
+    port: 5173, // frontend roda em http://localhost:5173
   },
 });
